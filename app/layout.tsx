@@ -1,13 +1,12 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
-
 const inter = Inter({ subsets: ["latin"] });
 
-const APP_NAME = "PWA App";
-const APP_DEFAULT_TITLE = "My Awesome PWA App";
-const APP_TITLE_TEMPLATE = "%s - PWA App";
-const APP_DESCRIPTION = "Best PWA app in the world!";
+const APP_NAME = "VOIRO KONSPEKT";
+const APP_DEFAULT_TITLE = "VOIRO KONSPEKT";
+const APP_TITLE_TEMPLATE = "%s - VOIRO KONSPEKT";
+const APP_DESCRIPTION = "VOIRO KONSPEKT - КОНСПЕКТ на любом Вашем устройстве!";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
