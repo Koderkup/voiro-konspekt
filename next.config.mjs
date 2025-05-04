@@ -9,4 +9,7 @@ const withPWA = withPWAInit({
 });
 
 export default withPWA({
+  experimental: {
+    optimizePackageImports: ["@chakra-ui/react"],
+  },
 });
