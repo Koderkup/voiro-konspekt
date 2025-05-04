@@ -1,11 +1,9 @@
 
-import { ColorModeButton } from "@/components/ui/color-mode";
 import { Container, Flex, Box, Image, VStack } from "@chakra-ui/react";
 import { Card } from "@chakra-ui/react";
 const AuthPage = () => {
   return (
     <Flex maxH={"100vh"} justifyContent={"center"} alignItems={"center"} px={4}>
-      <ColorModeButton />
       <Container maxW={"container.md"}>
         <Flex justifyContent={"center"} alignItems={"center"} gap={10}>
           <Box display={{ base: "none", md: "block" }}>
