@@ -2,6 +2,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 const inter = Inter({ subsets: ["latin"] });
+import { Provider } from "@/components/ui/provider";
+import { ColorModeButton } from "@/components/ui/color-mode";
 
 const APP_NAME = "VOIRO KONSPEKT";
 const APP_DEFAULT_TITLE = "VOIRO KONSPEKT";
@@ -53,8 +55,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/images/icons/icon-192x192.png" />
+      </head>
+      <body className={inter.className}>
+        <Provider>
+          <ColorModeButton />
+          {children}
+        </Provider>
+      </body>
     </html>
   );
 }
