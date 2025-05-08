@@ -3,7 +3,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 const inter = Inter({ subsets: ["latin"] });
 import { Provider } from "@/components/ui/provider";
-import { ColorModeButton } from "@/components/ui/color-mode";
+import Header from "@/components/header/Header"; 
 
 const APP_NAME = "VOIRO KONSPEKT";
 const APP_DEFAULT_TITLE = "VOIRO KONSPEKT";
@@ -61,7 +61,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <Provider>
-          <ColorModeButton />
+          <Header />
           {children}
         </Provider>
       </body>
