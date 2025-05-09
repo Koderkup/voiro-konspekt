@@ -1,8 +1,16 @@
-'use client';
+"use client";
 import { useState } from "react";
-import { Input, Button, InputGroup, Alert, AlertIcon } from "@chakra-ui/react";
-import { ViewIcon, ViewOffIcon, InputRightElement } from "@chakra-ui/icons";
+import {
+  Input,
+  Button,
+  InputGroup,
+  Alert,
+  Box,
+  AlertDescription, // Import AlertDescription
+} from "@chakra-ui/react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import useSignUpWithEmailAndPassword from "../../hooks/useSignUpWithEmailAndPassword";
+
 const SignUp = () => {
   const [inputs, setInputs] = useState({
     fullName: "",
@@ -12,9 +20,11 @@ const SignUp = () => {
   });
   const { loading, error, signup } = useSignUpWithEmailAndPassword();
   const [showPassword, setShowPassword] = useState(false);
-  const handleChange = (e) => {
-    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleChange = (e: any) => {
+    setInputs((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
   };
+
   return (
     <>
       <Input
@@ -44,7 +54,7 @@ const SignUp = () => {
         value={inputs.email}
         onChange={handleChange}
       />
-      <InputGroup>
+    
         <Input
           placeholder="Password"
           type={showPassword ? "text" : "password"}
@@ -53,29 +63,33 @@ const SignUp = () => {
           fontSize={14}
           value={inputs.password}
           onChange={handleChange}
+          pr="2.5rem" // Added padding right to prevent text overlap
         />
-        <InputRightElement h={"full"}>
+        <Box position="absolute" right="0" top="0" h="full">
           <Button
             variant={"ghost"}
             size="sm"
             onClick={() => setShowPassword(!showPassword)}
           >
-            {showPassword ? <ViewIcon /> : <ViewOffIcon />}
+            {showPassword ? <FiEye /> : <FiEyeOff />}
           </Button>
-        </InputRightElement>
-      </InputGroup>
+        </Box>
+
+
       {error && (
         <Alert status="error" fontSize={13} p={2} borderRadius={4}>
-          <AlertIcon fontSize={12} />
-          {error.message}
+          <AlertIcon />
+          <AlertDescription>{error.message}</AlertDescription>{" "}
+          {/* Use AlertDescription */}
         </Alert>
       )}
+
       <Button
         w={"full"}
         colorScheme="blue"
         size={"sm"}
         fontSize={14}
-        isLoading={loading}
+        loading={loading} 
         onClick={() => {
           signup(inputs);
         }}
@@ -87,4 +101,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
- 

@@ -4,6 +4,8 @@ import type { Metadata, Viewport } from "next";
 const inter = Inter({ subsets: ["latin"] });
 import { Provider } from "@/components/ui/provider";
 import Header from "@/components/header/Header"; 
+import Footer from "@/components/footer/Footer";
+import { Flex, Box } from "@chakra-ui/react";
 
 const APP_NAME = "VOIRO KONSPEKT";
 const APP_DEFAULT_TITLE = "VOIRO KONSPEKT";
@@ -61,8 +63,13 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <Provider>
-          <Header />
-          {children}
+          <Flex direction="column" minH="100vh">
+            <Header />
+            <Box flexGrow={1}>
+              {children}
+            </Box>
+            <Footer />
+          </Flex>
         </Provider>
       </body>
     </html>

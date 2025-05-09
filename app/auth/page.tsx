@@ -13,29 +13,7 @@ const AuthPage = () => {
   return (
     <Flex maxH={"100vh"} justifyContent={"center"} alignItems={"center"} px={4}>
       <Container maxW={"container.md"}>
-        <Flex justifyContent={"center"} alignItems={"center"} gap={10}>
-          <VStack align={"stretch"} my={"50px"}>
-            <Box textAlign={"center"}>Скачайте приложение.</Box>
-            <Flex gap={5} justifyContent={"center"}>
-              <Image
-                src="/images/playstore.png"
-                h={12}
-                w={161}
-                fit="contain"
-                cursor="pointer"
-                alt="Playstore.logo"
-              />
-              <Image
-                src="/images/microsoft.png"
-                h={12}
-                w={161}
-                alt="Microsoft.logo"
-                fit="contain"
-                cursor="pointer"
-              />
-            </Flex>
-          </VStack>
-        </Flex>
+        
         <Fieldset.Root size="lg" maxW="md">
           <Stack>
             <Fieldset.Legend>Contact details</Fieldset.Legend>
