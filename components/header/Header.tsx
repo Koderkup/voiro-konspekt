@@ -41,10 +41,8 @@ const isActive = (path: string) => {
         borderColor="gray.200"
         borderRadius="md"
         padding={2}
+        position={"relative"}
       >
-        {/* <Box mr={3} ml={-2}>
-          <ColorModeButton />
-        </Box> */}
         <ChildImage asChild>
           <Image
             src="/images/icons/icon-72x72.png"
@@ -56,6 +54,9 @@ const isActive = (path: string) => {
         <Heading as="h1" size="lg" letterSpacing="tighter" ml={5}>
           Конспект
         </Heading>
+        <Box position="absolute" top="-1px" right="0px" zIndex="sticky">
+          <ColorModeButton />
+        </Box>
       </Flex>
       <Box
         display={{ base: "block", md: "none" }}
