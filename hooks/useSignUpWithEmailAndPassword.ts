@@ -10,6 +10,8 @@ import {
 } from "firebase/firestore";
 import useShowToast from "./useShowToast";
 import useAuthStore from "../store/authStore";
+import { User, SignUpInputs } from "@/types/user.dto";
+
 
 const useSignUpWithEmailAndPassword = () => {
   const [createUserWithEmailAndPassword, , loading, error] =
@@ -17,11 +19,12 @@ const useSignUpWithEmailAndPassword = () => {
   const showToast = useShowToast();
   const loginUser = useAuthStore((state) => state.login);
 
-  const signup = async (inputs) => {
+  const signup = async (inputs: SignUpInputs) => {
+    console.log(inputs);
     if (
       !inputs.email ||
       !inputs.password ||
-      !inputs.username ||
+      !inputs.surname ||
       !inputs.fullName
     ) {
       showToast("Ошибка", "Пожалуйста, заполните все поля !", "error");
@@ -30,7 +33,7 @@ const useSignUpWithEmailAndPassword = () => {
 
     const usersRef = collection(firestore, "users");
 
-    const q = query(usersRef, where("username", "==", inputs.username));
+    const q = query(usersRef, where("email", "==", inputs.email));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -48,16 +51,15 @@ const useSignUpWithEmailAndPassword = () => {
         return;
       }
       if (newUser) {
-        const userDoc = {
+        const userDoc: User = {
           uid: newUser.user.uid,
           email: inputs.email,
-          username: inputs.username,
+          surname: inputs.surname || "",
+          username: inputs.email.split("@")[0],
           fullName: inputs.fullName,
-          bio: "",
+          role: "guest",
           profilePicURL: "",
-          followers: [],
-          following: [],
-          posts: [],
+          accessibleNotes: [],
           createdAt: Date.now(),
         };
         await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
@@ -65,10 +67,13 @@ const useSignUpWithEmailAndPassword = () => {
         loginUser(userDoc);
       }
     } catch (error) {
-      showToast("Error", error.message, "error");
+      if (error instanceof Error) {
+        showToast("Error", error.message, "error");
+      } else {
+        showToast("Error", "An unexpected error occurred", "error");
+      }
     }
   };
-
   return { loading, error, signup };
 };
 

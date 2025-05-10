@@ -1,12 +1,14 @@
-'use client';
+"use client";
 import { Flex, Image, Text } from "@chakra-ui/react";
 import { useSignInWithGoogle } from "react-firebase-hooks/auth";
 import { auth, firestore } from "../../firebase/firebase";
 import useShowToast from "../../hooks/useShowToast";
 import useAuthStore from "../../store/authStore";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { User, GoogleAuthProps } from "@/types/user.dto";
 
-const GoogleAuth = ({ prefix }) => {
+
+const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
   const [signInWithGoogle, , , error] = useSignInWithGoogle(auth);
   const showToast = useShowToast();
   const loginUser = useAuthStore((state) => state.login);
@@ -16,6 +18,10 @@ const GoogleAuth = ({ prefix }) => {
       const newUser = await signInWithGoogle();
       if (!newUser && error) {
         showToast("Error", error.message, "error");
+        return;
+      }
+      if (!newUser) {
+        showToast("Error", "Ошибка входа через Google", "error");
         return;
       }
       const userRef = doc(firestore, "users", newUser.user.uid);
@@ -28,16 +34,15 @@ const GoogleAuth = ({ prefix }) => {
         loginUser(userDoc);
       } else {
         // signup
-        const userDoc = {
+        const userDoc: User = {
           uid: newUser.user.uid,
-          email: newUser.user.email,
-          username: newUser.user.email.split("@")[0],
-          fullName: newUser.user.displayName,
-          bio: "",
-          profilePicURL: newUser.user.photoURL,
-          followers: [],
-          following: [],
-          posts: [],
+          email: newUser.user.email || "",
+          surname: "",
+          username: newUser.user.email?.split("@")[0] || "",
+          fullName: newUser.user.displayName || "Без имени",
+          role: "guest",
+          profilePicURL: newUser.user.photoURL || "",
+          accessibleNotes: [],
           createdAt: Date.now(),
         };
         await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
@@ -45,7 +50,7 @@ const GoogleAuth = ({ prefix }) => {
         loginUser(userDoc);
       }
     } catch (error) {
-      showToast("Error", error.message, "error");
+      showToast("Error", (error as Error).message, "error");
     }
   };
 

@@ -33,7 +33,7 @@ const Login = () => {
         onChange={handleChange}
       />
       {error && (
-        <Alert.Root>
+        <Alert.Root status="error">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>Ошибка</Alert.Title>

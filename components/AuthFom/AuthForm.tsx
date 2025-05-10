@@ -46,7 +46,7 @@ const AuthForm = () => {
             cursor={"pointer"}
             color={"blue.500"}
           >
-            {isLogin ? "Войти" : "Регистрация"}
+            {!isLogin ? "Войти" : "Регистрация"}
           </Box>
         </Flex>
       </Box>

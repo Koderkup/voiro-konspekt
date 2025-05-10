@@ -70,7 +70,7 @@ const SignUp = () => {
       </Box>
 
       {error && (
-        <Alert.Root>
+        <Alert.Root status="error">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>Ошибка</Alert.Title>
@@ -86,7 +86,8 @@ const SignUp = () => {
         fontSize={14}
         loading={loading}
         onClick={() => {
-          signup(inputs);
+          console.log(inputs)
+        signup(inputs);
         }}
       >
         Регистрация
