@@ -3,27 +3,26 @@ import { useState } from "react";
 import { Input, Button, Alert, Box } from "@chakra-ui/react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import useSignUpWithEmailAndPassword from "../../hooks/useSignUpWithEmailAndPassword";
-import useShowToast from "@/hooks/useShowToast";
+
+
 const SignUp = () => {
   const [inputs, setInputs] = useState({
     fullName: "",
-    username: "",
+    surname: "",
     email: "",
     password: "",
   });
   const { loading, error, signup } = useSignUpWithEmailAndPassword();
   const [showPassword, setShowPassword] = useState(false);
-  const showToast = useShowToast();
+
   const handleChange = (e: any) => {
     setInputs((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-  const handleShowToast = () => {
-    showToast("Success", "File saved successfully", "success");
-  };
+  
   return (
     <>
       <Input
-        placeholder="Full Name"
+        placeholder="Имя Отчество"
         type="text"
         name="fullName"
         size={"sm"}
@@ -32,12 +31,12 @@ const SignUp = () => {
         onChange={handleChange}
       />
       <Input
-        placeholder="Username"
+        placeholder="Фамилия"
         type="text"
-        name="username"
+        name="surname"
         size={"sm"}
         fontSize={14}
-        value={inputs.username}
+        value={inputs.surname}
         onChange={handleChange}
       />
       <Input
@@ -51,7 +50,7 @@ const SignUp = () => {
       />
 
       <Input
-        placeholder="Password"
+        placeholder="Пароль"
         type={showPassword ? "text" : "password"}
         name="password"
         size={"sm"}
@@ -60,7 +59,7 @@ const SignUp = () => {
         onChange={handleChange}
         pr="2.5rem"
       />
-      <Box position={"absolute"} top={'-25px'} right={'-32px'}>
+      <Box position={"absolute"} top={"-25px"} right={"-32px"}>
         <Button
           variant={"ghost"}
           size="sm"
@@ -74,8 +73,8 @@ const SignUp = () => {
         <Alert.Root>
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title />
-            <Alert.Description />
+            <Alert.Title>Ошибка</Alert.Title>
+            <Alert.Description>{error.message}</Alert.Description>
           </Alert.Content>
         </Alert.Root>
       )}

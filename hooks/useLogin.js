@@ -12,7 +12,7 @@ const useLogin = () => {
 
   const login = async (inputs) => {
     if (!inputs.email || !inputs.password) {
-      return showToast("Error", "Please fill all the fields", "error");
+      return showToast("Ошибка", "Пожалуйста, заполните все поля !", "error");
     }
     try {
       const userCred = await signInWithEmailAndPassword(

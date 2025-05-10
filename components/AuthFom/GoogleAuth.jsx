@@ -58,7 +58,7 @@ const GoogleAuth = ({ prefix }) => {
     >
       <Image src="images/google.png" w={5} alt="Google logo" />
       <Text mx="2" color={"blue.500"}>
-        {prefix} with Google
+        {prefix} через Google
       </Text>
     </Flex>
   );

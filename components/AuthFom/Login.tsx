@@ -1,6 +1,6 @@
 'use client';
 import { useState } from "react";
-import { Input, Button, Alert, AlertIcon } from "@chakra-ui/react";
+import { Input, Button, Alert } from "@chakra-ui/react";
 import useLogin from "../../hooks/useLogin";
 
 const Login = () => {
@@ -9,7 +9,7 @@ const Login = () => {
     email: "",
     password: "",
   });
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
   return (
@@ -24,7 +24,7 @@ const Login = () => {
         onChange={handleChange}
       />
       <Input
-        placeholder="Password"
+        placeholder="Пароль"
         type="password"
         name="password"
         size={"sm"}
@@ -33,10 +33,13 @@ const Login = () => {
         onChange={handleChange}
       />
       {error && (
-        <Alert status="error" fontSize={13} p={2} borderRadius={4}>
-          <AlertIcon fontSize={12} />
-          {error.message}
-        </Alert>
+        <Alert.Root>
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Ошибка</Alert.Title>
+            <Alert.Description>{"Ошибка авторизации"}</Alert.Description>
+          </Alert.Content>
+        </Alert.Root>
       )}
       <Button
         w={"full"}
@@ -44,7 +47,7 @@ const Login = () => {
         size={"sm"}
         fontSize={14}
         onClick={() => login(inputs)}
-        isLoading={loading}
+        loading={!!loading}
       >
         Вход
       </Button>

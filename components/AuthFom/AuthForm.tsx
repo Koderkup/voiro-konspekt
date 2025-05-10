@@ -4,8 +4,6 @@ import {
   Box,
   VStack,
   Image,
-  Input,
-  Button,
   Flex,
   Text,
 } from "@chakra-ui/react";
@@ -19,9 +17,9 @@ const AuthForm = () => {
   return (
     <>
       <Box border={"1px solid gray"} borderRadius={4} padding={5}>
-        <VStack spacing={4} position={'relative'}>
+        <VStack gap={4} position={'relative'}>
           <Image src="/images/logo.png" alt="voiro" h={24} cursor={"pointer"} />
-          {!isLogin ? <Login /> : <SignUp />}
+          {isLogin ? <Login /> : <SignUp />}
           <Flex
             alignItems={"center"}
             justifyContent={"center"}
