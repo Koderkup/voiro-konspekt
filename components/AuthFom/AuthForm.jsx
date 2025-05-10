@@ -20,8 +20,8 @@ const AuthForm = () => {
     <>
       <Box border={"1px solid gray"} borderRadius={4} padding={5}>
         <VStack spacing={4}>
-          <Image src="/logo.png" alt="instagram" h={24} cursor={"pointer"} />
-          {isLogin ? <Login /> : <SignUp />}
+          <Image src="/images/logo.png" alt="voiro" h={24} cursor={"pointer"} />
+          {!isLogin ? <Login /> : <SignUp />}
           <Flex
             alignItems={"center"}
             justifyContent={"center"}
@@ -30,25 +30,25 @@ const AuthForm = () => {
             w={"full"}
           >
             <Box flex={2} h={"1px"} bg={"gray.400"} />
-            <Text color={"white"} mx={1}>
-              OR
+            <Text mx={1}>
+              ИЛИ
             </Text>
             <Box flex={2} h={"1px"} bg={"gray.400"} />
           </Flex>
-          <GoogleAuth prefix={isLogin ? "Log in" : "Sign up"} />
+          <GoogleAuth prefix={isLogin ? "Вход" : "Регистрация"} />
         </VStack>
       </Box>
       <Box border={"1px solid gray"} borderRadius={4} padding={5}>
         <Flex alignItems={"center"} justifyContent={"center"}>
           <Box mx={2} fontSize={14}>
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            {isLogin ? "Нет аккаунта?" : "Уже есть аккаунт?"}
           </Box>
           <Box
             onClick={() => setIsLogin(!isLogin)}
             cursor={"pointer"}
             color={"blue.500"}
           >
-            {!isLogin ? "Log in" : "Sign Up"}
+            {isLogin ? "Войти" : "Регистрация"}
           </Box>
         </Flex>
       </Box>

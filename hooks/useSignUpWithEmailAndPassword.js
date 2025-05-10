@@ -24,7 +24,7 @@ const useSignUpWithEmailAndPassword = () => {
       !inputs.username ||
       !inputs.fullName
     ) {
-      showToast("Error", "Please fill all the fields", "error");
+      showToast("Ошибка", "Пожалуйста, заполните все поля !", "error");
       return;
     }
 

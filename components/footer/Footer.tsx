@@ -30,16 +30,24 @@ const Footer = () => {
 
             <VStack direction="row" alignItems="center" gap={4} mx="auto">
               <NextLink href="/" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Главная</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Главная
+                </Link>
               </NextLink>
               <NextLink href="/my-notes" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Мои конспекты</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Мои конспекты
+                </Link>
               </NextLink>
               <NextLink href="/tests" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Тесты</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Тесты
+                </Link>
               </NextLink>
               <NextLink href="/auth" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Авторизация</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Авторизация
+                </Link>
               </NextLink>
             </VStack>
 
@@ -76,16 +84,24 @@ const Footer = () => {
 
             <VStack align="start" gap={2}>
               <NextLink href="/" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Главная</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Главная
+                </Link>
               </NextLink>
               <NextLink href="/my-notes" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Мои конспекты</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Мои конспекты
+                </Link>
               </NextLink>
               <NextLink href="/tests" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Тесты</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Тесты
+                </Link>
               </NextLink>
               <NextLink href="/auth" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }}>Авторизация</Link>
+                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                  Авторизация
+                </Link>
               </NextLink>
             </VStack>
           </Flex>

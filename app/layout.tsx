@@ -6,7 +6,7 @@ import { Provider } from "@/components/ui/provider";
 import Header from "@/components/header/Header"; 
 import Footer from "@/components/footer/Footer";
 import { Flex, Box } from "@chakra-ui/react";
-
+import { Toaster } from "@/components/ui/toaster";
 const APP_NAME = "VOIRO KONSPEKT";
 const APP_DEFAULT_TITLE = "VOIRO KONSPEKT";
 const APP_TITLE_TEMPLATE = "%s - VOIRO KONSPEKT";
@@ -65,10 +65,9 @@ export default function RootLayout({
         <Provider>
           <Flex direction="column" minH="100vh">
             <Header />
-            <Box flexGrow={1}>
-              {children}
-            </Box>
+            <Box flexGrow={1}>{children}</Box>
             <Footer />
+            <Toaster />
           </Flex>
         </Provider>
       </body>

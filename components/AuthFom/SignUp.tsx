@@ -3,14 +3,12 @@ import { useState } from "react";
 import {
   Input,
   Button,
-  InputGroup,
   Alert,
   Box,
-  AlertDescription, // Import AlertDescription
 } from "@chakra-ui/react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import useSignUpWithEmailAndPassword from "../../hooks/useSignUpWithEmailAndPassword";
-
+import useShowToast from "@/hooks/useShowToast"; 
 const SignUp = () => {
   const [inputs, setInputs] = useState({
     fullName: "",
@@ -20,11 +18,13 @@ const SignUp = () => {
   });
   const { loading, error, signup } = useSignUpWithEmailAndPassword();
   const [showPassword, setShowPassword] = useState(false);
-
+const showToast = useShowToast();
   const handleChange = (e: any) => {
     setInputs((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-
+const handleShowToast = () => {
+  showToast("Success", "File saved successfully", "success");
+};
   return (
     <>
       <Input
@@ -54,47 +54,48 @@ const SignUp = () => {
         value={inputs.email}
         onChange={handleChange}
       />
-    
-        <Input
-          placeholder="Password"
-          type={showPassword ? "text" : "password"}
-          name="password"
-          size={"sm"}
-          fontSize={14}
-          value={inputs.password}
-          onChange={handleChange}
-          pr="2.5rem" // Added padding right to prevent text overlap
-        />
-        <Box position="absolute" right="0" top="0" h="full">
-          <Button
-            variant={"ghost"}
-            size="sm"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <FiEye /> : <FiEyeOff />}
-          </Button>
-        </Box>
 
+      <Input
+        placeholder="Password"
+        type={showPassword ? "text" : "password"}
+        name="password"
+        size={"sm"}
+        fontSize={14}
+        value={inputs.password}
+        onChange={handleChange}
+        pr="2.5rem"
+      />
+      <Box position="absolute" right="0" top="0" h="full">
+        <Button
+          variant={"ghost"}
+          size="sm"
+          onClick={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? <FiEye /> : <FiEyeOff />}
+        </Button>
+      </Box>
 
-      {error && (
-        <Alert status="error" fontSize={13} p={2} borderRadius={4}>
-          <AlertIcon />
-          <AlertDescription>{error.message}</AlertDescription>{" "}
-          {/* Use AlertDescription */}
-        </Alert>
-      )}
+       {error && (
+        <Alert.Root>
+        <Alert.Indicator />
+        <Alert.Content>
+          <Alert.Title />
+          <Alert.Description />
+        </Alert.Content>
+      </Alert.Root>
+      )} 
 
       <Button
         w={"full"}
         colorScheme="blue"
         size={"sm"}
         fontSize={14}
-        loading={loading} 
+        loading={loading}
         onClick={() => {
-          signup(inputs);
+        signup(inputs);
         }}
       >
-        Sign Up
+        Регистрация
       </Button>
     </>
   );

@@ -1,61 +1,38 @@
-
+"use client";
 import { Container, Flex, Box, Image, VStack } from "@chakra-ui/react";
-import {
-  Button,
-  Field,
-  Fieldset,
-  For,
-  Input,
-  NativeSelect,
-  Stack,
-} from "@chakra-ui/react";
+import AuthForm from '@/components/authFom/AuthForm'
+
 const AuthPage = () => {
   return (
-    <Flex maxH={"100vh"} justifyContent={"center"} alignItems={"center"} px={4}>
-      <Container maxW={"container.md"}>
-        
-        <Fieldset.Root size="lg" maxW="md">
-          <Stack>
-            <Fieldset.Legend>Contact details</Fieldset.Legend>
-            <Fieldset.HelperText>
-              Please provide your contact details below.
-            </Fieldset.HelperText>
-          </Stack>
-
-          <Fieldset.Content>
-            <Field.Root>
-              <Field.Label>Name</Field.Label>
-              <Input name="name" />
-            </Field.Root>
-
-            <Field.Root>
-              <Field.Label>Email address</Field.Label>
-              <Input name="email" type="email" />
-            </Field.Root>
-
-            <Field.Root>
-              <Field.Label>Country</Field.Label>
-              <NativeSelect.Root>
-                <NativeSelect.Field name="country">
-                  <For each={["United Kingdom", "Canada", "United States"]}>
-                    {(item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    )}
-                  </For>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-            </Field.Root>
-          </Fieldset.Content>
-
-          <Button type="submit" alignSelf="flex-start">
-            Submit
-          </Button>
-        </Fieldset.Root>
-      </Container>
-    </Flex>
+    <>
+      <Flex
+        justifyContent={"center"}
+        alignItems={"center"}
+        px={4}
+        mt={10}
+      >
+        <Container maxW={"container.md"} padding={0}>
+          <Flex justifyContent={"center"} alignItems={"center"} gap={10}>
+            <VStack gap={4} align={"stretch"}>
+              <AuthForm />
+              <Box textAlign={"center"}>Скачайте приложение.</Box>
+              <Flex gap={5} justifyContent={"center"} mb={10}>
+                <Image
+                  src="/images/playstore.png"
+                  h={"10"}
+                  alt="Playstore logo"
+                />
+                <Image
+                  src="/images/microsoft.png"
+                  h={"10"}
+                  alt="Microsoft logo"
+                />
+              </Flex>
+            </VStack>
+          </Flex>
+        </Container>
+      </Flex>
+    </>
   );
 };
 

@@ -46,7 +46,7 @@ const Login = () => {
         onClick={() => login(inputs)}
         isLoading={loading}
       >
-        Log in
+        Вход
       </Button>
     </>
   );
