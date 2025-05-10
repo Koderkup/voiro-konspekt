@@ -1,14 +1,9 @@
 "use client";
 import { useState } from "react";
-import {
-  Input,
-  Button,
-  Alert,
-  Box,
-} from "@chakra-ui/react";
+import { Input, Button, Alert, Box } from "@chakra-ui/react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import useSignUpWithEmailAndPassword from "../../hooks/useSignUpWithEmailAndPassword";
-import useShowToast from "@/hooks/useShowToast"; 
+import useShowToast from "@/hooks/useShowToast";
 const SignUp = () => {
   const [inputs, setInputs] = useState({
     fullName: "",
@@ -18,13 +13,13 @@ const SignUp = () => {
   });
   const { loading, error, signup } = useSignUpWithEmailAndPassword();
   const [showPassword, setShowPassword] = useState(false);
-const showToast = useShowToast();
+  const showToast = useShowToast();
   const handleChange = (e: any) => {
     setInputs((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-const handleShowToast = () => {
-  showToast("Success", "File saved successfully", "success");
-};
+  const handleShowToast = () => {
+    showToast("Success", "File saved successfully", "success");
+  };
   return (
     <>
       <Input
@@ -65,7 +60,7 @@ const handleShowToast = () => {
         onChange={handleChange}
         pr="2.5rem"
       />
-      <Box position="absolute" right="0" top="0" h="full">
+      <Box position={"absolute"} top={'-25px'} right={'-32px'}>
         <Button
           variant={"ghost"}
           size="sm"
@@ -75,15 +70,15 @@ const handleShowToast = () => {
         </Button>
       </Box>
 
-       {error && (
+      {error && (
         <Alert.Root>
-        <Alert.Indicator />
-        <Alert.Content>
-          <Alert.Title />
-          <Alert.Description />
-        </Alert.Content>
-      </Alert.Root>
-      )} 
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title />
+            <Alert.Description />
+          </Alert.Content>
+        </Alert.Root>
+      )}
 
       <Button
         w={"full"}
@@ -92,7 +87,7 @@ const handleShowToast = () => {
         fontSize={14}
         loading={loading}
         onClick={() => {
-        signup(inputs);
+          signup(inputs);
         }}
       >
         Регистрация

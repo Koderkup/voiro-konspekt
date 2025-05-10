@@ -19,7 +19,7 @@ const AuthForm = () => {
   return (
     <>
       <Box border={"1px solid gray"} borderRadius={4} padding={5}>
-        <VStack spacing={4}>
+        <VStack spacing={4} position={'relative'}>
           <Image src="/images/logo.png" alt="voiro" h={24} cursor={"pointer"} />
           {!isLogin ? <Login /> : <SignUp />}
           <Flex
