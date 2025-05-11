@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Box, Stack, Heading, Flex, Text } from "@chakra-ui/react";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { AiOutlineClose } from "react-icons/ai";
-import { ColorModeButton } from "@/components/ui/color-mode";
+import { ColorModeButton } from "../../components/ui/color-mode";
 import { ImEnter } from "react-icons/im";
 import { Image as ChildImage } from "@chakra-ui/react";
 import Link from "next/link"; 

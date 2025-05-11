@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import useShowToast from "./useShowToast";
 import useAuthStore from "../store/authStore";
-import { User, SignUpInputs } from "@/types/user.dto";
+import { User, SignUpInputs } from "../types/user.dto";
 
 
 const useSignUpWithEmailAndPassword = () => {
