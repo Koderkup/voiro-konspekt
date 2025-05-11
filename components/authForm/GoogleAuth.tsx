@@ -5,7 +5,7 @@ import { auth, firestore } from "../../firebase/firebase";
 import useShowToast from "../../hooks/useShowToast";
 import useAuthStore from "../../store/authStore";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { User, GoogleAuthProps } from "@/types/user.dto";
+import { User, GoogleAuthProps } from "../../types/user.dto";
 
 
 const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
