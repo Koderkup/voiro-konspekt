@@ -28,3 +28,18 @@ body {
     text-wrap: balance;
   }
 } */
+/* Global styles */
+body {
+  transition: background-image 0.3s ease;
+}
+
+html[style='color-scheme: light;'] body {
+  background-image: url(../public/images/bg.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+html[style='color-scheme: dark;'] body {
+  background-image: none;
+}
