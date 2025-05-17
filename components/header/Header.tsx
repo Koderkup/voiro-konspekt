@@ -86,7 +86,7 @@ const isActive = (path: string) => {
             _hover={{ cursor: "pointer", textDecoration: "underline" }}
             textDecoration={isActive("/my-notes") ? "underline" : "none"}
           >
-            Мои конспекты
+            Конспект
           </Text>
         </Link>
         <Link href="/tests" passHref>

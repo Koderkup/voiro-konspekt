@@ -36,7 +36,7 @@ const Footer = () => {
               </NextLink>
               <NextLink href="/my-notes" passHref legacyBehavior>
                 <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
-                  Мои конспекты
+                  Конспект
                 </Link>
               </NextLink>
               <NextLink href="/tests" passHref legacyBehavior>
@@ -90,7 +90,7 @@ const Footer = () => {
               </NextLink>
               <NextLink href="/my-notes" passHref legacyBehavior>
                 <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
-                  Мои конспекты
+                  Конспект
                 </Link>
               </NextLink>
               <NextLink href="/tests" passHref legacyBehavior>

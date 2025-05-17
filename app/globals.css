@@ -43,3 +43,10 @@ html[style='color-scheme: light;'] body {
 html[style='color-scheme: dark;'] body {
   background-image: none;
 }
+
+@media (max-width: 768px) {
+  html[style='color-scheme: light;'] body {
+    background-size: cover;
+    background-position: center;
+  }
+}
