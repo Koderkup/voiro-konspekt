@@ -1,16 +1,36 @@
+"use client";
 import {
   Box,
   Flex,
   Text,
-  VStack,
   Button,
-  useBreakpointValue,
 } from "@chakra-ui/react";
 import Image from "next/image";
 import { Image as ChakraImage } from "@chakra-ui/react";
+import { toaster } from "../components/ui/toaster";
 import { IoBookOutline } from "react-icons/io5";
+import Link from "next/link";
+import { Tooltip } from "../components/ui/tooltip";
+import { FaInstagram } from "react-icons/fa";
+import { TbHandFingerRight } from "react-icons/tb";
+import useAuthStore from "../store/authStore";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+const user = useAuthStore((state) => state.user); 
+const router = useRouter();
+
+const handleDownloadClick = (type = "error") => {
+  if (!user) {
+    toaster.create({
+      title: ' Пожалуйста авторизуйтесь, чтобы загрузить тетрадь',
+      type: type,
+    });
+  } else {
+   router.push("/workbook");
+  }
+};
+
   return (
     <Box flexGrow={1}>
       <Flex direction="column" align="center" gap={10} p={4} data-layer="40px">
@@ -53,55 +73,85 @@ export default function Home() {
             >
               Спасибо, что пользуетесь нашим приложением!
             </Text>
-            <Box
-              display="inline-block"
-              padding="10px"
-              border="1px solid transparent"
-              boxShadow="0 8px 30px rgba(0, 0, 0, 0.3)"
-              borderRadius="md"
+            <Tooltip
+              content={
+                "Скачайте приложение на своё устройство, и конспект будет всегда под рукой"
+              }
+              openDelay={100}
+              closeDelay={500}
+              contentProps={{ css: { "--tooltip-bg": "tomato" } }}
             >
-              <Text textAlign="center" fontSize="30px">
-                ВОИРО Конспект
-              </Text>
-            </Box>
+              <Box
+                display="inline-block"
+                padding="10px"
+                border="1px solid silver"
+                boxShadow="0 8px 30px rgba(0, 0, 0, 0.3)"
+                borderRadius="md"
+                transition="transform 0.3s"
+                _hover={{ transform: "scale(1.1)", cursor: "pointer" }}
+              >
+                <Text textAlign="center" fontSize="30px">
+                  ВОИРО Конспект
+                </Text>
+              </Box>
+            </Tooltip>
             <Box padding={4}>
               <Text
                 textAlign="center"
-                fontSize={{ base: "20px", md: "30px" }} 
-                lineHeight={{ base: "30px", md: "52px" }}               >
+                fontSize={{ base: "20px", md: "30px" }}
+                lineHeight={{ base: "30px", md: "52px" }}
+              >
                 <span style={{ color: "#667394", fontWeight: "400" }}>
-                  Thanks for downloading our
+                  Наша цель ускорить освоении материала
+                  <br />
                 </span>
-                <span style={{ color: "#0D0A2C", fontWeight: "700" }}>
-                  Brand Book Kit
-                </span>
+                <span style={{ fontWeight: "700" }}>Учебной программы</span>
                 <span style={{ color: "#667394", fontWeight: "400" }}>
-                  , we hope it is useful for you. <br />
-                  If you are looking for more amazing free Figma Templates, we
-                  recommend you to follow us in the
+                  , надемся что для Вас это будет полезно и удобно. <br />
+                  Ознакомится с учебными программами и расписанием Вы сможете на
+                  официальном сайте института{"  "}
                 </span>
+                <Link href={"https://voiro.by/"} passHref legacyBehavior>
+                  <Text
+                    as="span"
+                    color="#4A3AFF"
+                    fontWeight="400"
+                    textDecoration="underline"
+                    _hover={{ cursor: "pointer" }}
+                  >
+                    ВОИРО
+                  </Text>
+                </Link>
                 <span
                   style={{
-                    color: "#4A3AFF",
+                    color: "#667394",
                     fontWeight: "400",
-                    textDecoration: "underline",
+                    display: "inline-flex",
+                    alignItems: "center",
                   }}
                 >
-                  Figma Community
+                  {" "}
+                  или подписывайтесь на нас в инстаграме {"  "}
+                  <TbHandFingerRight
+                    style={{
+                      fontSize: "3.6rem",
+                    }}
+                  />
+                  <FaInstagram
+                    onClick={() =>
+                      window.open(
+                        "https://www.instagram.com/center.voiro/",
+                        "_blank"
+                      )
+                    }
+                    style={{
+                      color: "#E4405F",
+                      cursor: "pointer",
+                      marginLeft: "5px",
+                      fontSize: "3.6rem",
+                    }}
+                  />
                 </span>
-                <span style={{ color: "#667394", fontWeight: "400" }}>
-                  , or get one of our premium website templates from
-                </span>
-                <span
-                  style={{
-                    color: "#4A3AFF",
-                    fontWeight: "400",
-                    textDecoration: "underline",
-                  }}
-                >
-                  BRIXTemplates.com
-                </span>
-                <span style={{ color: "#667394", fontWeight: "400" }}>.</span>
               </Text>
             </Box>
           </Flex>
@@ -117,6 +167,7 @@ export default function Home() {
           fontSize="25.85px"
           fontWeight="700"
           lineHeight="29.72px"
+          onClick={()=>handleDownloadClick()}
         >
           Загрузить тетрадь
           <IoBookOutline />

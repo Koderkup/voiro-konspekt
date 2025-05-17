@@ -30,27 +30,52 @@ const Footer = () => {
 
             <VStack direction="row" alignItems="center" gap={4} mx="auto">
               <NextLink href="/" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Главная
                 </Link>
               </NextLink>
-              <NextLink href="/my-notes" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+              <NextLink href="/workbook" passHref legacyBehavior>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Конспект
                 </Link>
               </NextLink>
               <NextLink href="/tests" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Тесты
                 </Link>
               </NextLink>
               <NextLink href="/auth" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Авторизация
                 </Link>
               </NextLink>
             </VStack>
-
+            <VStack m={2}>
+              <Text style={{ color: "#667394", fontWeight: "400" }}>
+                Почтовый адрес: 210009, г.Витебск, проспект Фрунзе, 21
+              </Text>
+              <Text style={{ color: "#667394", fontWeight: "400" }}>
+                Телефон: +375 212 67-33-68
+              </Text>
+              <Text style={{ color: "#667394", fontWeight: "400" }}>
+                Адрес электронной почты: iro_vitebsk@voiro.by{" "}
+              </Text>
+              <Text style={{ color: "#667394", fontWeight: "400" }}>
+                Пн-Пт: 8:00 — 17:00 (перерыв на обед: 13:00 — 14:00){" "}
+              </Text>
+            </VStack>
             <Box
               width="500px"
               height="250px"
@@ -72,7 +97,7 @@ const Footer = () => {
 
         {/* Mobile Layout */}
         <VStack align="stretch" display={{ base: "flex", md: "none" }} gap={4}>
-          <Flex align="center" justify="space-between">
+          <Flex align="center" justify="space-around">
             <ChildImage asChild>
               <Image
                 src="/images/icons/icon-128x128.png"
@@ -84,22 +109,34 @@ const Footer = () => {
 
             <VStack align="start" gap={2}>
               <NextLink href="/" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Главная
                 </Link>
               </NextLink>
-              <NextLink href="/my-notes" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+              <NextLink href="/workbook" passHref legacyBehavior>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Конспект
                 </Link>
               </NextLink>
               <NextLink href="/tests" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Тесты
                 </Link>
               </NextLink>
               <NextLink href="/auth" passHref legacyBehavior>
-                <Link _hover={{ cursor: "pointer" }} style={{ color: "black" }}>
+                <Link
+                  _hover={{ cursor: "pointer" }}
+                  style={{ color: "#667394", fontWeight: "400" }}
+                >
                   Авторизация
                 </Link>
               </NextLink>

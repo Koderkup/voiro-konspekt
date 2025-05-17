@@ -30,9 +30,10 @@ const isActive = (path: string) => {
       justify="space-between"
       wrap="wrap"
       padding={6}
-      bg="#2596C2"
+      bg="rgba(37, 150, 194, 0.82)"
       color="white"
       position="relative"
+      boxShadow="0 4px 10px rgba(0, 0, 0, 0.4)"
     >
       <Flex
         align="center"
@@ -81,7 +82,7 @@ const isActive = (path: string) => {
             Главная
           </Text>
         </Link>
-        <Link href="/my-notes" passHref>
+        <Link href="/workbook" passHref>
           <Text
             _hover={{ cursor: "pointer", textDecoration: "underline" }}
             textDecoration={isActive("/my-notes") ? "underline" : "none"}

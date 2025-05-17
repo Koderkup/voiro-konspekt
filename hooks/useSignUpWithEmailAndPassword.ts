@@ -20,7 +20,6 @@ const useSignUpWithEmailAndPassword = () => {
   const loginUser = useAuthStore((state) => state.login);
 
   const signup = async (inputs: SignUpInputs) => {
-    console.log(inputs);
     if (
       !inputs.email ||
       !inputs.password ||
