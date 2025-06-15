@@ -86,7 +86,6 @@ const SignUp = () => {
         fontSize={14}
         loading={loading}
         onClick={() => {
-          console.log(inputs)
         signup(inputs);
         }}
       >
