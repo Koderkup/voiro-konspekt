@@ -16,7 +16,6 @@ const Users = () => {
             id: doc.id,
             ...doc.data(),
           }));
-          console.log(usersList);
         } catch (error) {
           console.error("Ошибка при получении пользователей: ", error);
         }
