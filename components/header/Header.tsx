@@ -27,11 +27,12 @@ import { deleteUser, getAuth } from "firebase/auth";
 import { doc, deleteDoc } from "firebase/firestore";
 import { firestore } from "../../firebase/firebase";
 import { toaster } from "../../components/ui/toaster";
+import {User} from "../../types/user.dto"
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const [authUser, setAuthUser] = useState(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
@@ -168,6 +169,16 @@ const Header: React.FC = () => {
             Тесты
           </Text>
         </Link>
+        {authUser && authUser.role === "admin" && (
+          <Link href="/users-list" passHref>
+            <Text
+              _hover={{ cursor: "pointer", textDecoration: "underline" }}
+              textDecoration={isActive("/users-list") ? "underline" : "none"}
+            >
+              Студенты
+            </Text>
+          </Link>
+        )}
         {authUser ? (
           <Flex align="center" display={{ base: "flex", md: "none" }}>
             <Dialog.Root>
