@@ -12,9 +12,11 @@ import {
 import { LuCheck, LuX } from "react-icons/lu";
 import { User } from "../../types/user.dto";
 import { FcPlus } from "react-icons/fc";
+import { GoTrash } from "react-icons/go";
 import { useState } from "react";
-import { firestore } from "../../firebase/firebase"; 
+import { firestore } from "../../firebase/firebase";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import useShowToast from "@/hooks/useShowToast";
 interface UserCardProps {
   user: User;
   onUserDeleted: (userId: string) => Promise<void>;
@@ -23,7 +25,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
   const { profilePicURL, email, accessibleNotes, fullName, username } = user;
   const [newNote, setNewNote] = useState("");
   const [isInputVisible, setIsInputVisible] = useState(false);
-
+  const showToast = useShowToast();
   const handleAddNote = async () => {
     if (newNote.trim()) {
       try {
@@ -31,12 +33,34 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
         await updateDoc(userRef, {
           accessibleNotes: [...accessibleNotes, newNote],
         });
-
         setNewNote("");
         setIsInputVisible(false);
+        showToast("Success", "Заметка успешно добавлена, обновите страницу", "success");
       } catch (error) {
+        showToast("Error", "Ошибка при добавлении заметки", "error");
         console.error("Ошибка при добавлении заметки: ", error);
       }
+    }
+  };
+
+  const handleDeleteNote = async (noteToDelete: string) => {
+    const updatedNotes = accessibleNotes.filter(
+      (note) => note !== noteToDelete
+    );
+
+    try {
+      const userRef = doc(firestore, "users", user.uid);
+      await updateDoc(userRef, {
+        accessibleNotes: updatedNotes,
+      });
+      showToast(
+        "Success",
+        "Заметка успешно удалена, обновите страницу",
+        "success"
+      );
+    } catch (error) {
+      showToast("Error", "Ошибка при удалении заметки", "error");
+      console.error("Ошибка при удалении заметки: ", error);
     }
   };
 
@@ -64,8 +88,19 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
           {accessibleNotes.length > 0 ? (
             <Stack>
               {accessibleNotes.map((note, index) => (
-                <Tag.Root key={index}>
+                <Tag.Root
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Tag.Label>{note}</Tag.Label>
+                  <GoTrash
+                    style={{ cursor: "pointer", float: "right" }}
+                    onClick={() => handleDeleteNote(note)}
+                  />
                 </Tag.Root>
               ))}
               <FcPlus
