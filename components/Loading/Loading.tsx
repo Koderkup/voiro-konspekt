@@ -1,4 +1,4 @@
-import s from "./styles/Loading.module.scss";
+import s from "./styles/Loading.module.css";
 
 const Loading = () => {
   return (
@@ -19,7 +19,7 @@ const Loading = () => {
           fill="none"
           points="20,1 40,40 1,40"
         ></polygon>
-        <text fill="#fff" x="3" y="47">
+        <text fill="#fff" x="10" y="47">
           ВОИРО
         </text>
       </svg>

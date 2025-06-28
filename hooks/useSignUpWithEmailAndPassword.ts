@@ -11,6 +11,7 @@ import {
 import useShowToast from "./useShowToast";
 import useAuthStore from "../store/authStore";
 import { User, SignUpInputs } from "../types/user.dto";
+import Cookies from "js-cookie";
 
 
 const useSignUpWithEmailAndPassword = () => {
@@ -63,6 +64,10 @@ const useSignUpWithEmailAndPassword = () => {
         };
         await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
         localStorage.setItem("user-info", JSON.stringify(userDoc));
+        Cookies.set("user-info", JSON.stringify(userDoc), {
+          expires: 30, 
+          path: "/", 
+        });
         loginUser(userDoc);
       }
     } catch (error) {

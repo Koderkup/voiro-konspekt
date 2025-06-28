@@ -6,6 +6,7 @@ import useShowToast from "../../hooks/useShowToast";
 import useAuthStore from "../../store/authStore";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { User, GoogleAuthProps } from "../../types/user.dto";
+import Cookies from "js-cookie";
 
 
 const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
@@ -31,6 +32,10 @@ const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
         // login
         const userDoc = userSnap.data();
         localStorage.setItem("user-info", JSON.stringify(userDoc));
+        Cookies.set("user-info", JSON.stringify(userDoc), {
+          expires: 30,
+          path: "/",
+        });
         loginUser(userDoc);
       } else {
         // signup
@@ -47,6 +52,10 @@ const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
         };
         await setDoc(doc(firestore, "users", newUser.user.uid), userDoc);
         localStorage.setItem("user-info", JSON.stringify(userDoc));
+        Cookies.set("user-info", JSON.stringify(userDoc), {
+          expires: 30,
+          path: "/",
+        });
         loginUser(userDoc);
       }
     } catch (error) {
