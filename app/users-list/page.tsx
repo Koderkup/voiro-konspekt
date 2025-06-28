@@ -12,7 +12,10 @@ import Loading from "../../components/Loading/Loading";
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [surnameFilter, setSurnameFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const auth = getAuth();
 
   const handleUserDeleted = async (userId: string) => {
@@ -25,32 +28,62 @@ const Users = () => {
     }
   };
 
+  const filterUsers = () => {
+    let filtered = users;
+
+    if (surnameFilter) {
+      filtered = filtered.filter(
+        (user) =>
+          user.fullName &&
+          user.fullName.toLowerCase().includes(surnameFilter.toLowerCase())
+      );
+    }
+
+    if (dateFilter) {
+      const selectedDate = new Date(dateFilter).getTime();
+      filtered = filtered.filter((user) => {
+        const userDate = user.createdAt;
+        return (
+          new Date(userDate).toDateString() ===
+          new Date(selectedDate).toDateString()
+        );
+      });
+    }
+
+    setFilteredUsers(filtered);
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const usersList = await getAllUsers();
         setUsers(usersList);
+        setFilteredUsers(usersList);
       } else {
         console.log("Пользователь не авторизован");
         setUsers([]);
       }
-      setIsLoading(false); // Устанавливаем состояние загрузки в false после выполнения
+      setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [auth]);
 
-  // Отображаем индикатор загрузки
   if (isLoading) {
     return <Loading />;
   }
 
-  // Отображаем пользователей
   return (
     <>
-      <FilterUsers />
+      <FilterUsers
+        surnameFilter={surnameFilter}
+        setSurnameFilter={setSurnameFilter}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        onFilter={filterUsers}
+      />
       <Wrap my={4} justify="center" align="center">
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <UserCard
             key={user.uid}
             user={user}
