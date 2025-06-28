@@ -221,7 +221,9 @@ const Header: React.FC = () => {
               display={{ base: "inline-block", md: "none" }}
               _hover={{ cursor: "pointer", textDecoration: "underline" }}
               border="1px solid"
-              borderColor="gray.200"
+              borderColor={
+                authUser && authUser.role === "admin" ? "red.500" : "white"
+              }
               borderRadius="md"
               padding={2}
               onClick={handleLogout}
@@ -289,7 +291,9 @@ const Header: React.FC = () => {
               display={{ base: "inline-block", md: "block" }}
               _hover={{ cursor: "pointer", textDecoration: "underline" }}
               border="1px solid"
-              borderColor="gray.200"
+              borderColor={
+                authUser && authUser.role === "admin" ? "red.500" : "white"
+              }
               borderRadius="md"
               padding={2}
               onClick={handleLogout}

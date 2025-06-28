@@ -16,7 +16,7 @@ import { GoTrash } from "react-icons/go";
 import { useState } from "react";
 import { firestore } from "../../firebase/firebase";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-import useShowToast from "@/hooks/useShowToast";
+import useShowToast from "../../hooks/useShowToast";
 interface UserCardProps {
   user: User;
   onUserDeleted: (userId: string) => Promise<void>;
@@ -26,6 +26,11 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
   const [newNote, setNewNote] = useState("");
   const [isInputVisible, setIsInputVisible] = useState(false);
   const showToast = useShowToast();
+  const createdAtDate = new Date(user.createdAt).toLocaleDateString("ru-RU", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
   const handleAddNote = async () => {
     if (newNote.trim()) {
       try {
@@ -77,6 +82,9 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
           <Stack gap="0">
             <Text fontWeight="semibold" textStyle="sm">
               {fullName || username}
+            </Text>
+            <Text color="fg.muted" textStyle="sm">
+              Регистрация: {createdAtDate}
             </Text>
             <Text color="fg.muted" textStyle="sm">
               {email}

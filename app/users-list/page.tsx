@@ -1,15 +1,20 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { firestore } from "../../firebase/firebase";
-import { collection, getDocs } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import UserCard from "../../components/userCard/userCard";
 import { Wrap } from "@chakra-ui/react";
 import { User } from "../../types/user.dto";
-import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
+import UserCard from "../../components/userCard/userCard";
+import FilterUsers from "../../components/filterUsers/FilterUsers";
+import { getAllUsers } from "../../utils/getAllUsers";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import Loading from "../../components/Loading/Loading";
+
 const Users = () => {
-  const auth = getAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const auth = getAuth();
+
   const handleUserDeleted = async (userId: string) => {
     try {
       const userRef = doc(firestore, "users", userId);
@@ -19,47 +24,41 @@ const Users = () => {
       console.error("Ошибка при удалении пользователя: ", error);
     }
   };
-  useEffect(() => {
-    const getAllUsers = async () => {
-      if (auth.currentUser) {
-        try {
-          const usersCollection = collection(firestore, "users");
-          const usersSnapshot = await getDocs(usersCollection);
-          const usersList = usersSnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              uid: data.uid,
-              email: data.email,
-              surname: data.surname || "",
-              username: data.username,
-              fullName: data.fullName,
-              role: data.role || "guest",
-              profilePicURL: data.profilePicURL || "",
-              accessibleNotes: data.accessibleNotes || [],
-              createdAt: data.createdAt || Date.now(),
-            } as User;
-          });
 
-          setUsers(usersList);
-          console.log("Список пользователей: ", usersList);
-        } catch (error) {
-          console.error("Ошибка при получении пользователей: ", error);
-        }
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const usersList = await getAllUsers();
+        setUsers(usersList);
       } else {
         console.log("Пользователь не авторизован");
+        setUsers([]);
       }
-    };
+      setIsLoading(false); // Устанавливаем состояние загрузки в false после выполнения
+    });
 
-    getAllUsers();
+    return () => unsubscribe();
   }, [auth]);
 
+  // Отображаем индикатор загрузки
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  // Отображаем пользователей
   return (
-    <Wrap my={4} justify="center" align="center">
-      {users.map((user, index) => (
-        <UserCard key={index} user={user} onUserDeleted={handleUserDeleted} />
-      ))}
-    </Wrap>
+    <>
+      <FilterUsers />
+      <Wrap my={4} justify="center" align="center">
+        {users.map((user) => (
+          <UserCard
+            key={user.uid}
+            user={user}
+            onUserDeleted={handleUserDeleted}
+          />
+        ))}
+      </Wrap>
+    </>
   );
 };
 
