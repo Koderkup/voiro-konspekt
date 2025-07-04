@@ -5,7 +5,6 @@ export async function AdminOnlyMiddleware(req: NextRequest) {
   const userInfoCookie = req.cookies.get("user-info");
 
   if (!userInfoCookie) {
-    // Create an absolute URL for the redirect
     const url = req.nextUrl.clone();
     url.pathname = "/auth";
     return NextResponse.redirect(url);
@@ -14,7 +13,6 @@ export async function AdminOnlyMiddleware(req: NextRequest) {
   const user: User = JSON.parse(userInfoCookie.value);
 
   if (user.role !== "admin") {
-    // Create an absolute URL for the redirect
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

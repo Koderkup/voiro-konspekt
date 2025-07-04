@@ -27,7 +27,7 @@ const handleDownloadClick = (type = "error") => {
       type: type,
     });
   } else {
-   router.push("/workbook");
+   router.push("/study-page");
   }
 };
 

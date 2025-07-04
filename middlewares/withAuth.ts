@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse, NextFetchEvent } from "next/server";
+import { NextRequest, NextResponse, NextFetchEvent, NextMiddleware } from "next/server";
 import { MiddlewareFactory } from "./stackHandler";
 import { AdminOnlyMiddleware } from "./adminOnlyMiddleware";
+import { AuthUsersOnlyMiddleware } from "./authUsersOnlyMiddleware";
+
 
 export const withAuth: MiddlewareFactory = (next) => {
   return async (request: NextRequest, event: NextFetchEvent) => {
     const pathname = request.nextUrl.pathname;
-console.log(pathname);
     if (pathname.startsWith("/users-list")) {
 
       const response = await AdminOnlyMiddleware(request);
@@ -13,7 +14,13 @@ console.log(pathname);
         return response; 
       }
     }
-
+if (pathname === "/study-page") {
+  const response = await AuthUsersOnlyMiddleware(request);
+  if (response) {
+    return response;
+  }
+}
     return next(request, event); 
   };
 };
+
