@@ -13,7 +13,19 @@ const StudyPage = () => {
     setIsMounted(true);
     if (user) setWorkbooks(user.accessibleNotes);
   }, []);
+useEffect(() => {
+  async function fetchNotebooks() {
+    try {
+      const res = await fetch("/api/notebooks");
+      const notebooks = await res.json();
+      console.log("📓 Список тетрадей:", notebooks);
+    } catch (err) {
+      console.error("Ошибка загрузки:", err);
+    }
+  }
 
+  fetchNotebooks();
+}, []);
   if (!isMounted) return <Loading />;
   return (
     <>
