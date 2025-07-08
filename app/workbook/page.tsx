@@ -1,9 +1,5 @@
-import React from 'react'
+import DynamicMyNotes from "./DynamicMyNotes";
 
-const MyNotes = () => {
-  return (
-    <div>MyNotes</div>
-  )
+export default function WorkbookPage() {
+  return <DynamicMyNotes />;
 }
-
-export default MyNotes
