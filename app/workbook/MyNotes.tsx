@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Text, Image } from "react-konva";
+import * as pdfjsLib from "pdfjs-dist";
+import PdfEditor from "@/components/PdfEditor/PdfEditor";
 
 const MyNotes = () => {
   const [textBlocks, setTextBlocks] = useState([
@@ -13,6 +15,9 @@ const MyNotes = () => {
       fontSize: 20,
     },
   ]);
+ useEffect(() => {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+}, []);
 
   const [background, setBackground] = useState<HTMLImageElement | null>(null);
   const [dimensions, setDimensions] = useState({
@@ -55,7 +60,7 @@ const MyNotes = () => {
   };
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+    <><div style={{ width: "100vw", height: "100vh", position: "relative" }}>
       <div style={{ marginBottom: "1rem" }}>
         <button onClick={saveLayout}>💾 Сохранить</button>
         <button onClick={loadLayout}>📂 Загрузить</button>
@@ -70,8 +75,7 @@ const MyNotes = () => {
             <Image
               image={background}
               width={dimensions.width}
-              height={dimensions.height}
-            />
+              height={dimensions.height} />
           )}
           {textBlocks.map((block, idx) => (
             <Text
@@ -82,12 +86,11 @@ const MyNotes = () => {
               fontSize={block.fontSize}
               fill="black"
               draggable
-              onDragEnd={(e) => handleDragEnd(idx, e)}
-            />
+              onDragEnd={(e) => handleDragEnd(idx, e)} />
           ))}
         </Layer>
       </Stage>
-    </div>
+    </div><PdfEditor /></>
   );
 };
 
