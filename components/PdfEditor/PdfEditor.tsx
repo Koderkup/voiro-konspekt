@@ -1,12 +1,16 @@
+//
+
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { Button, Input } from "@chakra-ui/react";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js";
 
 const PdfEditor = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -19,10 +23,10 @@ const PdfEditor = () => {
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
   const isRendering = useRef(false);
-  const currentViewport = useRef<any>(null);
+const initialRenderDone = useRef(false);
 
-  const openPDFDatabase = async () => {
-    return new Promise<IDBDatabase>((resolve, reject) => {
+  const openPDFDatabase = async (): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
       const request = indexedDB.open("PDFStorage", 1);
       request.onupgradeneeded = () => {
         const db = request.result;
@@ -35,13 +39,11 @@ const PdfEditor = () => {
     });
   };
 
-  const savePDFToDB = async (key: string, bytes: Uint8Array): Promise<void> => {
+  const savePDFToDB = async (key: string, bytes: Uint8Array) => {
     const db = await openPDFDatabase();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction("files", "readwrite");
-      const store = tx.objectStore("files");
-      store.put(bytes, key);
-
+    const tx = db.transaction("files", "readwrite");
+    tx.objectStore("files").put(bytes, key);
+    return new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
@@ -49,19 +51,16 @@ const PdfEditor = () => {
 
   const loadPDFFromDB = async (key: string): Promise<Uint8Array | null> => {
     const db = await openPDFDatabase();
+    const tx = db.transaction("files", "readonly");
+    const request = tx.objectStore("files").get(key);
     return new Promise((resolve, reject) => {
-      const tx = db.transaction("files", "readonly");
-      const store = tx.objectStore("files");
-      const request = store.get(key);
       request.onsuccess = () => {
         const result = request.result;
+        if (result instanceof Uint8Array) return resolve(result);
+        if (result instanceof ArrayBuffer)
+          return resolve(new Uint8Array(result));
         if (result instanceof Blob) {
           result.arrayBuffer().then((buf) => resolve(new Uint8Array(buf)));
-        } else if (
-          result instanceof Uint8Array ||
-          result instanceof ArrayBuffer
-        ) {
-          resolve(new Uint8Array(result));
         } else resolve(null);
       };
       request.onerror = () => reject(request.error);
@@ -99,8 +98,6 @@ const PdfEditor = () => {
 
     const page = await pdfDoc.getPage(n);
     const viewport = page.getViewport({ scale });
-    currentViewport.current = viewport;
-
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     canvas.width = viewport.width;
@@ -186,7 +183,6 @@ const PdfEditor = () => {
       for (let i = 0; i < words.length; i++) {
         const testLine = line + words[i] + " ";
         const testWidth = font.widthOfTextAtSize(testLine, 16);
-
         if (testWidth > maxWidth && i > 0) {
           page.drawText(line.trim(), {
             x: pdfX,
@@ -213,16 +209,11 @@ const PdfEditor = () => {
       }
     }
 
-    const out = await doc.save(); // Uint8Array
+    const safeBuffer = new ArrayBuffer(pdfBytes.length);
+    const safeBytes = new Uint8Array(safeBuffer);
+    safeBytes.set(pdfBytes);
 
-    // Создаём ArrayBuffer нужной длины
-    const ab = new ArrayBuffer(out.length);
-    // Копируем содержимое
-    const safeBuffer = new Uint8Array(ab);
-    safeBuffer.set(out);
-
-    // Теперь можно безопасно использовать
-    const blob = new Blob([ab], { type: "application/pdf" });
+    const blob = new Blob([safeBytes], { type: "application/pdf" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "annotated.pdf";
@@ -231,25 +222,99 @@ const PdfEditor = () => {
   };
 
   useEffect(() => {
-    const savedText = localStorage.getItem("textItems");
-    if (savedText) setTextItems(JSON.parse(savedText));
+    const loadInitialData = async () => {
+      const pdfBytes = await loadPDFFromDB("pdfRaw");
+      if (!pdfBytes) return;
+
+      const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      setPdfDoc(doc);
+      setPageCount(doc.numPages);
+
+      const savedText = localStorage.getItem("textItems");
+      if (savedText) {
+        const parsed = JSON.parse(savedText);
+        setTextItems(parsed);
+      }
+
+      const savedPageNum = localStorage.getItem("lastPageNum");
+      if (savedPageNum) {
+        setPageNum(parseInt(savedPageNum));
+      }
+    };
+
+    loadInitialData();
   }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem("textItems", JSON.stringify(textItems));
+  // }, [textItems]);
+
+  useEffect(() => {
+    if (
+      pdfDoc &&
+      canvasRef.current &&
+      !initialRenderDone.current &&
+      textItems.length >= 0
+    ) {
+      initialRenderDone.current = true;
+      renderPage(pageNum);
+    }
+  }, [pdfDoc, textItems]);
+
 
   return (
     <div>
-      <input ref={fileRef} type="file" accept="application/pdf" />
-      <button onClick={loadPDF}>📂 Загрузить PDF</button>
-      <canvas ref={canvasRef} onClick={handleCanvasClick}></canvas>
+      <Input
+        ref={fileRef}
+        type="file"
+        accept="application/pdf"
+        width={"fit-content"}
+      />
+      <Button colorPalette="cyan" variant="surface" onClick={loadPDF}>
+        📂 Показать PDF
+      </Button>
+      <canvas ref={canvasRef} onClick={handleCanvasClick} />
       <div>
-        <button onClick={() => renderPage(Math.max(1, pageNum - 1))}>⬅</button>
-        <button onClick={() => renderPage(Math.min(pageCount, pageNum + 1))}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            const newPage = Math.max(1, pageNum - 1);
+            setPageNum(newPage);
+            localStorage.setItem("lastPageNum", String(newPage));
+          }}
+        >
+          ⬅
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            const newPage = Math.min(pageCount, pageNum + 1);
+            setPageNum(newPage);
+            localStorage.setItem("lastPageNum", String(newPage));
+          }}
+        >
           ➡
-        </button>
-        <button onClick={() => setScale((s) => s + 0.2)}>🔍+</button>
-        <button onClick={() => setScale((s) => Math.max(0.2, s - 0.2))}>
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => setScale((s) => Math.min(s + 0.2, 3))}
+        >
+          🔍+
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}
+        >
           🔎–
-        </button>
-        <button onClick={savePdf}>💾 Сохранить PDF</button>
+        </Button>
+        <Button
+          variant="surface"
+          colorPalette="cyan"
+          onClick={savePdf}
+        >
+          💾 Сохранить PDF
+        </Button>
       </div>
 
       <div>
