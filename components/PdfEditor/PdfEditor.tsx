@@ -245,10 +245,7 @@ const initialRenderDone = useRef(false);
     loadInitialData();
   }, []);
 
-  // useEffect(() => {
-  //   localStorage.setItem("textItems", JSON.stringify(textItems));
-  // }, [textItems]);
-
+  
   useEffect(() => {
     if (
       pdfDoc &&
