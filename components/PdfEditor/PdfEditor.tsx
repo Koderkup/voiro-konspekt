@@ -1,13 +1,8 @@
-//
-
 "use client";
-
 import React, { useRef, useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
-import { Button, Input } from "@chakra-ui/react";
-
+import { Button, Flex, Input } from "@chakra-ui/react";
+import pdfUtils from "../../utils/pdfUtils";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js";
@@ -16,236 +11,88 @@ const PdfEditor = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
-
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [pageNum, setPageNum] = useState(1);
   const [pageCount, setPageCount] = useState(0);
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
   const isRendering = useRef(false);
-const initialRenderDone = useRef(false);
+  const initialRenderDone = useRef(false);
 
-  const openPDFDatabase = async (): Promise<IDBDatabase> => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open("PDFStorage", 1);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains("files")) {
-          db.createObjectStore("files");
+  const {
+    openPDFDatabase,
+    savePDFToDB,
+    loadPDFFromDB,
+    wrapText,
+    renderPage,
+    loadPDF,
+    handleCanvasClick,
+    savePdf,
+  } = pdfUtils;
+
+const renderPageWithParams = (n: number) =>
+  renderPage(
+    n,
+    pdfDoc,
+    canvasRef,
+    textItems,
+    scale,
+    setPageNum,
+    wrapText,
+    isRendering
+  );
+
+  const loadPDFHandler = () => {
+    if (!fileRef.current) return;
+    loadPDF(
+      fileRef.current,
+      savePDFToDB,
+      setPdfDoc,
+      setPageCount,
+      renderPageWithParams
+    );
+  };
+
+  const canvasClickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    handleCanvasClick(
+      e,
+      canvasRef,
+      textRef, 
+      pageNum,
+      textItems,
+      setTextItems,
+      () => renderPageWithParams(pageNum)
+    );
+  };
+
+  const savePdfHandler = () => {
+    savePdf(canvasRef, loadPDFFromDB, textItems);
+  };
+
+    useEffect(() => {
+      const loadInitialData = async () => {
+        const pdfBytes = await loadPDFFromDB("pdfRaw");
+        if (!pdfBytes) return;
+
+        const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        setPdfDoc(doc);
+        setPageCount(doc.numPages);
+
+        const savedText = localStorage.getItem("textItems");
+        if (savedText) {
+          const parsed = JSON.parse(savedText);
+          setTextItems(parsed);
+        }
+
+        const savedPageNum = localStorage.getItem("lastPageNum");
+        if (savedPageNum) {
+          setPageNum(parseInt(savedPageNum));
         }
       };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  };
 
-  const savePDFToDB = async (key: string, bytes: Uint8Array) => {
-    const db = await openPDFDatabase();
-    const tx = db.transaction("files", "readwrite");
-    tx.objectStore("files").put(bytes, key);
-    return new Promise<void>((resolve, reject) => {
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  };
+      loadInitialData();
+    }, []);
 
-  const loadPDFFromDB = async (key: string): Promise<Uint8Array | null> => {
-    const db = await openPDFDatabase();
-    const tx = db.transaction("files", "readonly");
-    const request = tx.objectStore("files").get(key);
-    return new Promise((resolve, reject) => {
-      request.onsuccess = () => {
-        const result = request.result;
-        if (result instanceof Uint8Array) return resolve(result);
-        if (result instanceof ArrayBuffer)
-          return resolve(new Uint8Array(result));
-        if (result instanceof Blob) {
-          result.arrayBuffer().then((buf) => resolve(new Uint8Array(buf)));
-        } else resolve(null);
-      };
-      request.onerror = () => reject(request.error);
-    });
-  };
-
-  const wrapText = (
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    x: number,
-    y: number,
-    maxWidth: number,
-    lineHeight: number
-  ) => {
-    const words = text.split(" ");
-    let line = "";
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + " ";
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-      if (testWidth > maxWidth && n > 0) {
-        ctx.fillText(line, x, y);
-        line = words[n] + " ";
-        y += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line, x, y);
-  };
-
-  const renderPage = async (n: number) => {
-    if (isRendering.current || !pdfDoc) return;
-    isRendering.current = true;
-
-    const page = await pdfDoc.getPage(n);
-    const viewport = page.getViewport({ scale });
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    await page.render({ canvasContext: ctx, viewport }).promise;
-
-    ctx.font = "16px sans-serif";
-    ctx.fillStyle = "black";
-    ctx.textBaseline = "top";
-
-    textItems
-      .filter((t) => t.page === n)
-      .forEach((item) => {
-        wrapText(ctx, item.text, item.canvasX, item.canvasY, 300, 20);
-      });
-
-    setPageNum(n);
-    isRendering.current = false;
-  };
-
-  const loadPDF = () => {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return alert("Выберите PDF-файл");
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const bytes = new Uint8Array(reader.result as ArrayBuffer);
-      await savePDFToDB("pdfRaw", bytes);
-
-      const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
-      setPdfDoc(doc);
-      setPageCount(doc.numPages);
-      renderPage(1);
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const handleCanvasClick = (e: React.MouseEvent) => {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    const canvasX = ((e.clientX - rect.left) * canvas.width) / rect.width;
-    const canvasY = ((e.clientY - rect.top) * canvas.height) / rect.height;
-
-    const text = textRef.current?.value.trim();
-    if (!text) return;
-
-    const newItem = { text, page: pageNum, canvasX, canvasY };
-    const newItems = [...textItems, newItem];
-    setTextItems(newItems);
-    localStorage.setItem("textItems", JSON.stringify(newItems));
-    renderPage(pageNum);
-  };
-
-  const savePdf = async () => {
-    const pdfBytes = await loadPDFFromDB("pdfRaw");
-    if (!pdfBytes || textItems.length === 0)
-      return alert("Нет данных для сохранения");
-
-    const doc = await PDFDocument.load(pdfBytes);
-    doc.registerFontkit(fontkit);
-
-    const fontBytes = await fetch(
-      "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37/ttf/DejaVuSans.ttf"
-    ).then((r) => r.arrayBuffer());
-    const font = await doc.embedFont(fontBytes);
-    const pages = doc.getPages();
-
-    for (const item of textItems) {
-      const page = pages[item.page - 1];
-      const { width, height } = page.getSize();
-      const scaleX = width / canvasRef.current!.width;
-      const scaleY = height / canvasRef.current!.height;
-
-      let pdfX = item.canvasX * scaleX;
-      let pdfY = height - item.canvasY * scaleY;
-
-      const maxWidth = 300;
-      const lineHeight = 16;
-      const words = item.text.split(" ");
-      let line = "";
-
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + " ";
-        const testWidth = font.widthOfTextAtSize(testLine, 16);
-        if (testWidth > maxWidth && i > 0) {
-          page.drawText(line.trim(), {
-            x: pdfX,
-            y: pdfY,
-            size: 11,
-            font,
-            color: rgb(0, 0, 0),
-          });
-          line = words[i] + " ";
-          pdfY -= lineHeight;
-        } else {
-          line = testLine;
-        }
-      }
-
-      if (line.trim()) {
-        page.drawText(line.trim(), {
-          x: pdfX,
-          y: pdfY,
-          size: 11,
-          font,
-          color: rgb(0, 0, 0),
-        });
-      }
-    }
-
-    const safeBuffer = new ArrayBuffer(pdfBytes.length);
-    const safeBytes = new Uint8Array(safeBuffer);
-    safeBytes.set(pdfBytes);
-
-    const blob = new Blob([safeBytes], { type: "application/pdf" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "annotated.pdf";
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
-  };
-
-  useEffect(() => {
-    const loadInitialData = async () => {
-      const pdfBytes = await loadPDFFromDB("pdfRaw");
-      if (!pdfBytes) return;
-
-      const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-      setPdfDoc(doc);
-      setPageCount(doc.numPages);
-
-      const savedText = localStorage.getItem("textItems");
-      if (savedText) {
-        const parsed = JSON.parse(savedText);
-        setTextItems(parsed);
-      }
-
-      const savedPageNum = localStorage.getItem("lastPageNum");
-      if (savedPageNum) {
-        setPageNum(parseInt(savedPageNum));
-      }
-    };
-
-    loadInitialData();
-  }, []);
-
-  
   useEffect(() => {
     if (
       pdfDoc &&
@@ -254,24 +101,51 @@ const initialRenderDone = useRef(false);
       textItems.length >= 0
     ) {
       initialRenderDone.current = true;
-      renderPage(pageNum);
+      renderPageWithParams(pageNum);
     }
   }, [pdfDoc, textItems]);
 
-
   return (
-    <div>
-      <Input
-        ref={fileRef}
-        type="file"
-        accept="application/pdf"
-        width={"fit-content"}
-      />
-      <Button colorPalette="cyan" variant="surface" onClick={loadPDF}>
-        📂 Показать PDF
-      </Button>
-      <canvas ref={canvasRef} onClick={handleCanvasClick} />
-      <div>
+    <Flex
+      direction="column"
+      align="center"
+      width="100%"
+      height="100%"
+      p={4}
+      gap={4}
+    >
+      {/* Верхняя панель */}
+      <Flex justify="space-between" width="100%" wrap="wrap" gap={2}>
+        <Input
+          ref={fileRef}
+          type="file"
+          accept="application/pdf"
+          width="auto"
+        />
+        <Button colorScheme="cyan" onClick={loadPDFHandler}>
+          📂 Показать PDF
+        </Button>
+        <Button colorScheme="cyan" onClick={savePdfHandler}>
+          💾 Сохранить PDF
+        </Button>
+      </Flex>
+
+      {/* Canvas */}
+      <Flex flex="1" width="100%" justify="center" align="center">
+        <canvas
+          ref={canvasRef}
+          onClick={canvasClickHandler}
+          style={{
+            border: "1px solid #ccc",
+            maxWidth: "100%",
+            height: "auto",
+            cursor: "crosshair",
+          }}
+        />
+      </Flex>
+
+      {/* Нижняя панель */}
+      <Flex justify="center" wrap="wrap" gap={2}>
         <Button
           variant="outline"
           onClick={() => {
@@ -292,7 +166,6 @@ const initialRenderDone = useRef(false);
         >
           ➡
         </Button>
-
         <Button
           variant="outline"
           onClick={() => setScale((s) => Math.min(s + 0.2, 3))}
@@ -305,31 +178,29 @@ const initialRenderDone = useRef(false);
         >
           🔎–
         </Button>
-        <Button
-          variant="surface"
-          colorPalette="cyan"
-          onClick={savePdf}
-        >
-          💾 Сохранить PDF
-        </Button>
-      </div>
+      </Flex>
 
-      <div>
+      {/* Поле ввода текста */}
+      <Flex direction="column" align="center" gap={2}>
         <textarea
           ref={textRef}
           rows={3}
-          cols={30}
+          cols={40}
           placeholder="✏️ Введите текст…"
+          style={{
+            resize: "none",
+            padding: "8px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+          }}
         />
-      </div>
-
-      <div>
         <p>
           Страница: {pageNum} / {pageCount}
         </p>
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   );
+
 };
 
 export default PdfEditor;
