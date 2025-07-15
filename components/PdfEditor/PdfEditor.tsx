@@ -105,6 +105,12 @@ const renderPageWithParams = (n: number) =>
     }
   }, [pdfDoc, textItems]);
 
+  useEffect(() => {
+    if (pdfDoc && canvasRef.current && initialRenderDone.current) {
+      renderPageWithParams(pageNum);
+    }
+  }, [pageNum]);
+
   return (
     <Flex
       direction="column"
@@ -114,7 +120,6 @@ const renderPageWithParams = (n: number) =>
       p={4}
       gap={4}
     >
-      {/* Верхняя панель */}
       <Flex justify="space-between" width="100%" wrap="wrap" gap={2}>
         <Input
           ref={fileRef}
@@ -130,7 +135,6 @@ const renderPageWithParams = (n: number) =>
         </Button>
       </Flex>
 
-      {/* Canvas */}
       <Flex flex="1" width="100%" justify="center" align="center">
         <canvas
           ref={canvasRef}
@@ -143,8 +147,6 @@ const renderPageWithParams = (n: number) =>
           }}
         />
       </Flex>
-
-      {/* Нижняя панель */}
       <Flex justify="center" wrap="wrap" gap={2}>
         <Button
           variant="outline"
@@ -180,7 +182,6 @@ const renderPageWithParams = (n: number) =>
         </Button>
       </Flex>
 
-      {/* Поле ввода текста */}
       <Flex direction="column" align="center" gap={2}>
         <textarea
           ref={textRef}
