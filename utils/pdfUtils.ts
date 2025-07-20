@@ -246,6 +246,18 @@ const blob = new Blob([safeBytes], { type: "application/pdf" });
   setTimeout(() => URL.revokeObjectURL(link.href), 1500);
 };
 
+export async function clearPDFCache() {
+  try {
+    const db = await openPDFDatabase();
+    const tx = db.transaction("files", "readwrite");
+    await tx.objectStore("files").delete("pdfRaw");
+    localStorage.removeItem("textItems");
+    location.reload();
+  } catch (error) {
+    console.error("Ошибка при очистке кэша: ", error);
+    throw error;
+  }
+}
 export default {
   openPDFDatabase,
   savePDFToDB,
@@ -255,4 +267,5 @@ export default {
   loadPDF,
   handleCanvasClick,
   savePdf,
+  clearPDFCache,
 };

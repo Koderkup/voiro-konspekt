@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Button, Flex, Input, Badge, Textarea } from "@chakra-ui/react";
 import pdfUtils from "../../utils/pdfUtils";
-
+import useShowToast from "../../hooks/useShowToast";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js";
 
@@ -18,9 +18,8 @@ const PdfEditor = () => {
   const [scale, setScale] = useState(1.2);
   const isRendering = useRef(false);
   const initialRenderDone = useRef(false);
-
+  const showToast = useShowToast();
   const {
-    openPDFDatabase,
     savePDFToDB,
     loadPDFFromDB,
     wrapText,
@@ -28,6 +27,7 @@ const PdfEditor = () => {
     loadPDF,
     handleCanvasClick,
     savePdf,
+    clearPDFCache,
   } = pdfUtils;
 
 const renderPageWithParams = (n: number) =>
@@ -67,6 +67,15 @@ const renderPageWithParams = (n: number) =>
 
   const savePdfHandler = () => {
     savePdf(canvasRef, loadPDFFromDB, textItems);
+  };
+
+  const clearCacheHandler = async  () => {
+    try {
+      await clearPDFCache();
+      showToast("Success", "Кэш очищен", "success");
+    } catch (error) {
+      showToast("Error", "Ошибка при очистке кэша", "error");
+    }
   };
 
     useEffect(() => {
@@ -109,16 +118,10 @@ const renderPageWithParams = (n: number) =>
     if (pdfDoc && canvasRef.current && initialRenderDone.current) {
       renderPageWithParams(pageNum);
     }
-  }, [pageNum]);
+  }, [pageNum, scale]);
 
   return (
-    <Flex
-      direction="column"
-      align="center"
-      width="100%"
-      p={4}
-      gap={4}
-    >
+    <Flex direction="column" align="center" width="100%" p={4} gap={4}>
       <Flex justify="space-between" width="100%" wrap="wrap" gap={2}>
         <Input
           ref={fileRef}
@@ -128,6 +131,9 @@ const renderPageWithParams = (n: number) =>
         />
         <Button variant="subtle" colorPalette="blue" onClick={loadPDFHandler}>
           📂 Показать PDF
+        </Button>
+        <Button variant="subtle" colorPalette="red" onClick={clearCacheHandler}>
+          🧹 Очистить кэш
         </Button>
         <Button variant="subtle" colorPalette="green" onClick={savePdfHandler}>
           💾 Сохранить PDF
@@ -140,7 +146,7 @@ const renderPageWithParams = (n: number) =>
           onClick={canvasClickHandler}
           style={{
             border: "1px solid #ccc",
-            maxWidth: "100%",
+            maxWidth: "150%",
             height: "auto",
             cursor: "crosshair",
           }}
@@ -173,7 +179,7 @@ const renderPageWithParams = (n: number) =>
           colorPalette="blue"
           variant="subtle"
           size="md"
-          onClick={() => setScale((s) => Math.min(s + 0.2, 3))}
+          onClick={() => setScale((scale) => Math.min(scale + 0.2, 3))}
         >
           🔍+
         </Button>
@@ -181,7 +187,7 @@ const renderPageWithParams = (n: number) =>
           colorPalette="blue"
           variant="subtle"
           size="md"
-          onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}
+          onClick={() => setScale((scale) => Math.max(scale - 0.2, 0.4))}
         >
           🔎–
         </Button>
