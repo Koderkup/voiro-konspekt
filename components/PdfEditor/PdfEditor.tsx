@@ -1,11 +1,22 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { Button, Flex, Input, Badge, Textarea } from "@chakra-ui/react";
+import {
+  Button,
+  Flex,
+  Input,
+  Badge,
+  Textarea,
+  NumberInput,
+  Kbd,
+  CloseButton,
+  Drawer,
+  Portal,
+} from "@chakra-ui/react";
 import pdfUtils from "../../utils/pdfUtils";
 import useShowToast from "../../hooks/useShowToast";
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.6.172/pdf.worker.min.js";
+import { FaRegFile } from "react-icons/fa";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 const PdfEditor = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -16,6 +27,24 @@ const PdfEditor = () => {
   const [pageCount, setPageCount] = useState(0);
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
+  const [showIcon, setShowIcon] = useState(false);
+
+  const handleResize = () => {
+    if (window.innerWidth < 768) {
+      setShowIcon(true);
+    } else {
+      setShowIcon(false);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
   const isRendering = useRef(false);
   const initialRenderDone = useRef(false);
   const showToast = useShowToast();
@@ -30,17 +59,17 @@ const PdfEditor = () => {
     clearPDFCache,
   } = pdfUtils;
 
-const renderPageWithParams = (n: number) =>
-  renderPage(
-    n,
-    pdfDoc,
-    canvasRef,
-    textItems,
-    scale,
-    setPageNum,
-    wrapText,
-    isRendering
-  );
+  const renderPageWithParams = (n: number) =>
+    renderPage(
+      n,
+      pdfDoc,
+      canvasRef,
+      textItems,
+      scale,
+      setPageNum,
+      wrapText,
+      isRendering
+    );
 
   const loadPDFHandler = () => {
     if (!fileRef.current) return;
@@ -57,7 +86,7 @@ const renderPageWithParams = (n: number) =>
     handleCanvasClick(
       e,
       canvasRef,
-      textRef, 
+      textRef,
       pageNum,
       textItems,
       setTextItems,
@@ -69,7 +98,7 @@ const renderPageWithParams = (n: number) =>
     savePdf(canvasRef, loadPDFFromDB, textItems);
   };
 
-  const clearCacheHandler = async  () => {
+  const clearCacheHandler = async () => {
     try {
       await clearPDFCache();
       showToast("Success", "Кэш очищен", "success");
@@ -78,29 +107,29 @@ const renderPageWithParams = (n: number) =>
     }
   };
 
-    useEffect(() => {
-      const loadInitialData = async () => {
-        const pdfBytes = await loadPDFFromDB("pdfRaw");
-        if (!pdfBytes) return;
+  useEffect(() => {
+    const loadInitialData = async () => {
+      const pdfBytes = await loadPDFFromDB("pdfRaw");
+      if (!pdfBytes) return;
 
-        const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-        setPdfDoc(doc);
-        setPageCount(doc.numPages);
+      const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      setPdfDoc(doc);
+      setPageCount(doc.numPages);
 
-        const savedText = localStorage.getItem("textItems");
-        if (savedText) {
-          const parsed = JSON.parse(savedText);
-          setTextItems(parsed);
-        }
+      const savedText = localStorage.getItem("textItems");
+      if (savedText) {
+        const parsed = JSON.parse(savedText);
+        setTextItems(parsed);
+      }
 
-        const savedPageNum = localStorage.getItem("lastPageNum");
-        if (savedPageNum) {
-          setPageNum(parseInt(savedPageNum));
-        }
-      };
+      const savedPageNum = localStorage.getItem("lastPageNum");
+      if (savedPageNum) {
+        setPageNum(parseInt(savedPageNum));
+      }
+    };
 
-      loadInitialData();
-    }, []);
+    loadInitialData();
+  }, []);
 
   useEffect(() => {
     if (
@@ -129,18 +158,94 @@ const renderPageWithParams = (n: number) =>
           accept="application/pdf"
           width="auto"
         />
-        <Button variant="subtle" colorPalette="blue" onClick={loadPDFHandler}>
+        <Button
+          variant="subtle"
+          colorPalette="blue"
+          onClick={loadPDFHandler}
+          display={{ base: "none", md: "block" }}
+        >
           📂 Показать PDF
         </Button>
-        <Button variant="subtle" colorPalette="red" onClick={clearCacheHandler}>
+        <Button
+          variant="subtle"
+          colorPalette="red"
+          onClick={clearCacheHandler}
+          display={{ base: "none", md: "block" }}
+        >
           🧹 Очистить кэш
         </Button>
-        <Button variant="subtle" colorPalette="green" onClick={savePdfHandler}>
+        <Button
+          variant="subtle"
+          colorPalette="green"
+          onClick={savePdfHandler}
+          display={{ base: "none", md: "block" }}
+        >
           💾 Сохранить PDF
         </Button>
+        {showIcon && (
+          <Drawer.Root>
+            <Drawer.Trigger asChild>
+              <Button variant="outline" size="sm">
+                <FaRegFile size={24} />
+              </Button>
+            </Drawer.Trigger>
+            <Portal>
+              <Drawer.Backdrop />
+              <Drawer.Positioner>
+                <Drawer.Content bg="rgba(255, 255, 255, 0.8)" maxH="40vh">
+                  <Drawer.Header>
+                    <Drawer.Title>Файловые кнопки</Drawer.Title>
+                  </Drawer.Header>
+                  <Drawer.Body
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Button
+                      variant="subtle"
+                      colorPalette="blue"
+                      onClick={loadPDFHandler}
+                      style={{ width: "55%", margin: "6% auto" }}
+                    >
+                      📂 Показать PDF
+                    </Button>
+                    <Button
+                      variant="subtle"
+                      colorPalette="red"
+                      onClick={clearCacheHandler}
+                      style={{ width: "55%", margin: "6% auto" }}
+                    >
+                      🧹 Очистить кэш
+                    </Button>
+                    <Button
+                      variant="subtle"
+                      colorPalette="green"
+                      onClick={savePdfHandler}
+                      style={{ width: "55%", margin: "6% auto" }}
+                    >
+                      💾 Сохранить PDF
+                    </Button>
+                  </Drawer.Body>
+                  <Drawer.Footer></Drawer.Footer>
+                  <Drawer.CloseTrigger asChild>
+                    <CloseButton size="sm" />
+                  </Drawer.CloseTrigger>
+                </Drawer.Content>
+              </Drawer.Positioner>
+            </Portal>
+          </Drawer.Root>
+        )}
       </Flex>
 
-      <Flex flex="1" width="100%" justify="center" align="center">
+      <Flex
+        flex="1"
+        width="100%"
+        justify="center"
+        align="center"
+        overflowX={"auto"}
+      >
         <canvas
           ref={canvasRef}
           onClick={canvasClickHandler}
@@ -210,9 +315,21 @@ const renderPageWithParams = (n: number) =>
           Страница: {pageNum} / {pageCount}
         </Badge>
       </Flex>
+      <Kbd color="blue.500">Перейти к странице:</Kbd>
+      <NumberInput.Root defaultValue={pageNum.toString()}>
+        <NumberInput.Input
+          min={1}
+          max={pageCount}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            if (value >= 1 && value <= pageCount) {
+              setPageNum(value);
+            }
+          }}
+        />
+      </NumberInput.Root>
     </Flex>
   );
-
 };
 
 export default PdfEditor;
