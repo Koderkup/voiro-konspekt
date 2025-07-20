@@ -8,9 +8,10 @@ import {
   Text,
   Tag,
   Input,
+  VStack,
 } from "@chakra-ui/react";
 import { LuCheck, LuX } from "react-icons/lu";
-import { User } from "../../types/user.dto";
+import { User, Workbook } from "../../types/user.dto";
 import { FcPlus } from "react-icons/fc";
 import { GoTrash } from "react-icons/go";
 import { useState } from "react";
@@ -23,7 +24,7 @@ interface UserCardProps {
 }
 const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
   const { profilePicURL, email, accessibleNotes, fullName, username } = user;
-  const [newNote, setNewNote] = useState("");
+  const [newNote, setNewNote] = useState<Workbook>({ title: "", url: "" });
   const [isInputVisible, setIsInputVisible] = useState(false);
   const showToast = useShowToast();
   const createdAtDate = new Date(user.createdAt).toLocaleDateString("ru-RU", {
@@ -32,15 +33,19 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
     day: "numeric",
   });
   const handleAddNote = async () => {
-    if (newNote.trim()) {
+    if (newNote.title.trim() !== "") {
       try {
         const userRef = doc(firestore, "users", user.uid);
         await updateDoc(userRef, {
           accessibleNotes: [...accessibleNotes, newNote],
         });
-        setNewNote("");
+        setNewNote(newNote);
         setIsInputVisible(false);
-        showToast("Success", "Заметка успешно добавлена, обновите страницу", "success");
+        showToast(
+          "Success",
+          "Заметка успешно добавлена, обновите страницу",
+          "success"
+        );
       } catch (error) {
         showToast("Error", "Ошибка при добавлении заметки", "error");
         console.error("Ошибка при добавлении заметки: ", error);
@@ -48,9 +53,9 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
     }
   };
 
-  const handleDeleteNote = async (noteToDelete: string) => {
+  const handleDeleteNote = async (noteToDelete: Workbook) => {
     const updatedNotes = accessibleNotes.filter(
-      (note) => note !== noteToDelete
+      (note) => note.title !== noteToDelete.title
     );
 
     try {
@@ -75,7 +80,9 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
         <HStack mb="6" gap="3">
           <Avatar.Root>
             <Avatar.Image
-              src={profilePicURL || "https://via.placeholder.com/96"}
+              src={profilePicURL || ""}
+              // src={profilePicURL || "/images/icons/icon-72x72.png"}
+              alt={"Profile picture"}
             />
             <Avatar.Fallback name={fullName ? fullName.charAt(0) : "A"} />
           </Avatar.Root>
@@ -104,7 +111,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
                     alignItems: "center",
                   }}
                 >
-                  <Tag.Label>{note}</Tag.Label>
+                  <Tag.Label>{note.title}</Tag.Label>
                   <GoTrash
                     style={{ cursor: "pointer", float: "right" }}
                     onClick={() => handleDeleteNote(note)}
@@ -116,13 +123,22 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
                 onClick={() => setIsInputVisible(!isInputVisible)}
               />
               {isInputVisible && (
-                <HStack mt="2">
+                <VStack mt="2">
                   <Input
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
+                    value={newNote.title}
+                    onChange={(e) =>
+                      setNewNote({ ...newNote, title: e.target.value })
+                    }
                     placeholder="Название конспекта"
                   />
-                </HStack>
+                  <Input
+                    value={newNote.url}
+                    onChange={(e) =>
+                      setNewNote({ ...newNote, url: e.target.value })
+                    }
+                    placeholder="url ссылка на конспекта"
+                  />
+                </VStack>
               )}
             </Stack>
           ) : (
@@ -133,13 +149,22 @@ const UserCard: React.FC<UserCardProps> = ({ user, onUserDeleted }) => {
                 onClick={() => setIsInputVisible(!isInputVisible)}
               />
               {isInputVisible && (
-                <HStack mt="2">
+                <VStack mt="2">
                   <Input
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
+                    value={newNote.title}
+                    onChange={(e) =>
+                      setNewNote({ ...newNote, title: e.target.value })
+                    }
                     placeholder="Название конспекта"
                   />
-                </HStack>
+                  <Input
+                    value={newNote.url}
+                    onChange={(e) =>
+                      setNewNote({ ...newNote, url: e.target.value })
+                    }
+                    placeholder="url ссылка на конспекта"
+                  />
+                </VStack>
               )}
             </>
           )}

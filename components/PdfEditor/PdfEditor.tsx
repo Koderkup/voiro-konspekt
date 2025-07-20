@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { Button, Flex, Input } from "@chakra-ui/react";
+import { Button, Flex, Input, Badge, Textarea } from "@chakra-ui/react";
 import pdfUtils from "../../utils/pdfUtils";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -116,7 +116,6 @@ const renderPageWithParams = (n: number) =>
       direction="column"
       align="center"
       width="100%"
-      height="100%"
       p={4}
       gap={4}
     >
@@ -127,10 +126,10 @@ const renderPageWithParams = (n: number) =>
           accept="application/pdf"
           width="auto"
         />
-        <Button colorScheme="cyan" onClick={loadPDFHandler}>
+        <Button variant="subtle" colorPalette="blue" onClick={loadPDFHandler}>
           📂 Показать PDF
         </Button>
-        <Button colorScheme="cyan" onClick={savePdfHandler}>
+        <Button variant="subtle" colorPalette="green" onClick={savePdfHandler}>
           💾 Сохранить PDF
         </Button>
       </Flex>
@@ -149,7 +148,8 @@ const renderPageWithParams = (n: number) =>
       </Flex>
       <Flex justify="center" wrap="wrap" gap={2}>
         <Button
-          variant="outline"
+          colorPalette="teal"
+          variant="surface"
           onClick={() => {
             const newPage = Math.max(1, pageNum - 1);
             setPageNum(newPage);
@@ -159,7 +159,8 @@ const renderPageWithParams = (n: number) =>
           ⬅
         </Button>
         <Button
-          variant="outline"
+          colorPalette="teal"
+          variant="surface"
           onClick={() => {
             const newPage = Math.min(pageCount, pageNum + 1);
             setPageNum(newPage);
@@ -169,13 +170,17 @@ const renderPageWithParams = (n: number) =>
           ➡
         </Button>
         <Button
-          variant="outline"
+          colorPalette="blue"
+          variant="subtle"
+          size="md"
           onClick={() => setScale((s) => Math.min(s + 0.2, 3))}
         >
           🔍+
         </Button>
         <Button
-          variant="outline"
+          colorPalette="blue"
+          variant="subtle"
+          size="md"
           onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}
         >
           🔎–
@@ -183,7 +188,7 @@ const renderPageWithParams = (n: number) =>
       </Flex>
 
       <Flex direction="column" align="center" gap={2}>
-        <textarea
+        <Textarea
           ref={textRef}
           rows={3}
           cols={40}
@@ -195,9 +200,9 @@ const renderPageWithParams = (n: number) =>
             border: "1px solid #ccc",
           }}
         />
-        <p>
+        <Badge colorPalette="purple">
           Страница: {pageNum} / {pageCount}
-        </p>
+        </Badge>
       </Flex>
     </Flex>
   );

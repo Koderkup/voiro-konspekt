@@ -3,7 +3,7 @@ import { Box } from "@chakra-ui/react";
 
 const MyNotes = () => {
   return (
-    <Box minHeight="100vh" position="relative" pb="160px">
+    <Box minHeight="100vh" position="relative">
       <PdfEditor />
     </Box>
   );
