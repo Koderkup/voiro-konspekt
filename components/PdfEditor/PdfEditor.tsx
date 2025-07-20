@@ -246,16 +246,17 @@ const PdfEditor = () => {
         align="center"
         overflowX={"auto"}
       >
-        <canvas
-          ref={canvasRef}
-          onClick={canvasClickHandler}
-          style={{
-            border: "1px solid #ccc",
-            maxWidth: "150%",
-            height: "auto",
-            cursor: "crosshair",
-          }}
-        />
+        <div style={{ overflowX: "auto", width: "100%" }}>
+          <canvas
+            ref={canvasRef}
+            onClick={canvasClickHandler}
+            style={{
+              border: "1px solid #ccc",
+              height: "auto",
+              cursor: "crosshair",
+            }}
+          />
+        </div>
       </Flex>
       <Flex justify="center" wrap="wrap" gap={2}>
         <Button
