@@ -77,7 +77,7 @@ const PdfEditor = () => {
           console.log(`Удаляем текст: "${updated[indexToRemove].text}"`);
           updated.splice(indexToRemove, 1);
           localStorage.setItem("textItems", JSON.stringify(updated));
-          setTimeout(() => renderPageWithParams(pageNum), 0); // безопасный ререндер
+          setTimeout(() => renderPageWithParams(pageNum), 0); 
           return updated;
         } else {
           console.log("Текст не найден для удаления.");
@@ -347,7 +347,7 @@ const savePdfHandler = async () => {
             style={{
               display: "block",
               margin: "0 auto",
-              minWidth: "100%",
+              width: scale > 1.2 ? `${scale * 100}%` : "100%",
               border: "1px solid #ccc",
               height: "auto",
               cursor: "crosshair",
@@ -390,7 +390,7 @@ const savePdfHandler = async () => {
           colorPalette="blue"
           variant="subtle"
           size="md"
-          onClick={() => setScale((scale) => Math.max(scale - 0.2, 1.15))}
+          onClick={() => setScale((scale) => Math.max(scale - 0.2, 1.2))}
         >
           🔎–
         </Button>
