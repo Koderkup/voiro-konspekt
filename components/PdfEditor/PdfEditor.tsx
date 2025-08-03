@@ -390,7 +390,7 @@ const savePdfHandler = async () => {
           colorPalette="blue"
           variant="subtle"
           size="md"
-          onClick={() => setScale((scale) => Math.max(scale - 0.2, 0.4))}
+          onClick={() => setScale((scale) => Math.max(scale - 0.2, 1.15))}
         >
           🔎–
         </Button>
