@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import {
   Button,
@@ -12,6 +12,7 @@ import {
   CloseButton,
   Drawer,
   Portal,
+  Heading,
 } from "@chakra-ui/react";
 import pdfUtils from "../../utils/pdfUtils";
 import useShowToast from "../../hooks/useShowToast";
@@ -45,6 +46,60 @@ const PdfEditor = () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  const handleContextMenu = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = Math.round(
+        ((e.clientX - rect.left) * canvas.width) / rect.width
+      );
+      const canvasY = Math.round(
+        ((e.clientY - rect.top) * canvas.height) / rect.height
+      );
+
+      setTextItems((prev) => {
+        const indexToRemove = prev.findIndex((item) => {
+          const absX = item.relativeX * canvas.width;
+          const absY = item.relativeY * canvas.height;
+          return (
+            Math.abs(absX - canvasX) < 10 &&
+            Math.abs(absY - canvasY) < 10 &&
+            item.page === pageNum
+          );
+        });
+
+        if (indexToRemove !== -1) {
+          const updated = [...prev];
+          console.log(`Удаляем текст: "${updated[indexToRemove].text}"`);
+          updated.splice(indexToRemove, 1);
+          localStorage.setItem("textItems", JSON.stringify(updated));
+          setTimeout(() => renderPageWithParams(pageNum), 0); // безопасный ререндер
+          return updated;
+        } else {
+          console.log("Текст не найден для удаления.");
+          return prev;
+        }
+      });
+    },
+    [pageNum]
+  );
+
+
+
+useEffect(() => {
+  const canvas = canvasRef.current;
+  if (!canvas) return;
+
+  canvas.addEventListener("contextmenu", handleContextMenu);
+  return () => {
+    canvas.removeEventListener("contextmenu", handleContextMenu);
+  };
+}, [handleContextMenu]);
+
   const isRendering = useRef(false);
   const initialRenderDone = useRef(false);
   const showToast = useShowToast();
@@ -57,6 +112,7 @@ const PdfEditor = () => {
     handleCanvasClick,
     savePdf,
     clearPDFCache,
+    downloadImage,
   } = pdfUtils;
 
   const renderPageWithParams = (n: number) =>
@@ -90,13 +146,28 @@ const PdfEditor = () => {
       pageNum,
       textItems,
       setTextItems,
-      () => renderPageWithParams(pageNum)
+      (updatedItems) =>
+        renderPage(
+          pageNum,
+          pdfDoc,
+          canvasRef,
+          updatedItems,
+          scale,
+          setPageNum,
+          wrapText,
+          isRendering
+        )
     );
   };
-
-  const savePdfHandler = () => {
-    savePdf(canvasRef, loadPDFFromDB, textItems);
-  };
+const savePdfHandler = async () => {
+  const result = await savePdf(canvasRef, loadPDFFromDB, textItems);
+  if (result.success) {
+    showToast("Success", result.message, "success");
+  } else {
+    showToast("Error", result.message, "error");
+  }
+  console.log(result)
+};
 
   const clearCacheHandler = async () => {
     try {
@@ -149,6 +220,13 @@ const PdfEditor = () => {
     }
   }, [pageNum, scale]);
 
+  useEffect(() => {
+    if (pdfDoc && canvasRef.current) {
+      renderPageWithParams(pageNum);
+    }
+  }, [textItems]);
+
+
   return (
     <Flex direction="column" align="center" width="100%" p={4} gap={4}>
       <Flex justify="space-between" width="100%" wrap="wrap" gap={2}>
@@ -181,6 +259,14 @@ const PdfEditor = () => {
           display={{ base: "none", md: "block" }}
         >
           💾 Сохранить PDF
+        </Button>
+        <Button
+          variant="subtle"
+          colorPalette="yellow"
+          onClick={() => downloadImage(canvasRef.current!, pageNum)}
+          display={{ base: "none", md: "block" }}
+        >
+          📷 скрин страницы
         </Button>
         {showIcon && (
           <Drawer.Root>
@@ -227,6 +313,14 @@ const PdfEditor = () => {
                     >
                       💾 Сохранить PDF
                     </Button>
+                    <Button
+                      variant="subtle"
+                      colorPalette="yellow"
+                      onClick={() => {}}
+                      style={{ width: "55%", margin: "6% auto" }}
+                    >
+                      📷 скрин страницы
+                    </Button>
                   </Drawer.Body>
                   <Drawer.Footer></Drawer.Footer>
                   <Drawer.CloseTrigger asChild>
@@ -238,7 +332,7 @@ const PdfEditor = () => {
           </Drawer.Root>
         )}
       </Flex>
-
+      <Heading>Ваш конспект</Heading>
       <Flex
         flex="1"
         width="100%"
@@ -251,6 +345,9 @@ const PdfEditor = () => {
             ref={canvasRef}
             onClick={canvasClickHandler}
             style={{
+              display: "block",
+              margin: "0 auto",
+              minWidth: "100%",
               border: "1px solid #ccc",
               height: "auto",
               cursor: "crosshair",

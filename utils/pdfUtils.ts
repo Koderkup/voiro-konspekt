@@ -121,7 +121,9 @@ export const renderPage = async (
   textItems
     .filter((t) => t.page === pageNum)
     .forEach((item) => {
-      wrapTextFn(ctx, item.text, item.canvasX, item.canvasY, 300, 20);
+      const absX = item.relativeX * canvas.width;
+      const absY = item.relativeY * canvas.height;
+      wrapTextFn(ctx, item.text, absX, absY, 300, 20);
     });
 
   setPageNum(pageNum);
@@ -158,21 +160,25 @@ export const handleCanvasClick = (
   pageNum: number,
   textItems: any[],
   setTextItems: (items: any[]) => void,
-  renderPageFn: () => void
+  renderPageFn: (updatedItems: any[]) => void
 ) => {
   const canvas = canvasRef.current!;
   const rect = canvas.getBoundingClientRect();
   const canvasX = ((e.clientX - rect.left) * canvas.width) / rect.width;
   const canvasY = ((e.clientY - rect.top) * canvas.height) / rect.height;
 
+  const relativeX = canvasX / canvas.width;
+  const relativeY = canvasY / canvas.height;
+
   const text = textRef.current?.value.trim();
   if (!text) return;
 
-  const newItem = { text, page: pageNum, canvasX, canvasY };
+  const newItem = { text, page: pageNum, relativeX, relativeY };
   const newItems = [...textItems, newItem];
   setTextItems(newItems);
   localStorage.setItem("textItems", JSON.stringify(newItems));
-  renderPageFn();
+
+  renderPageFn(newItems);
 };
 
 export const savePdf = async (
@@ -182,8 +188,7 @@ export const savePdf = async (
 ) => {
   const pdfBytes = await loadPDFFromDB("pdfRaw");
   if (!pdfBytes || textItems.length === 0)
-    return alert("Нет данных для сохранения");
-
+     return { success: false, message: "Нет данных для сохранения" };
   const doc = await PDFDocument.load(pdfBytes);
   doc.registerFontkit(fontkit);
 
@@ -196,11 +201,8 @@ export const savePdf = async (
   for (const item of textItems) {
     const page = pages[item.page - 1];
     const { width, height } = page.getSize();
-    const scaleX = width / canvasRef.current!.width;
-    const scaleY = height / canvasRef.current!.height;
-
-    let pdfX = item.canvasX * scaleX;
-    let pdfY = height - item.canvasY * scaleY;
+    let pdfX = item.relativeX * width;
+    let pdfY = height - item.relativeY * height;
 
     const maxWidth = 300;
     const lineHeight = 16;
@@ -235,15 +237,16 @@ export const savePdf = async (
       });
     }
   }
-const safeBuffer = new ArrayBuffer(pdfBytes.length);
-const safeBytes = new Uint8Array(safeBuffer);
-safeBytes.set(pdfBytes);
-const blob = new Blob([safeBytes], { type: "application/pdf" });
+  const modifiedPdfBytes = await doc.save(); 
+  const blob = new Blob([new Uint8Array(modifiedPdfBytes)], {
+    type: "application/pdf",
+  });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "annotated.pdf";
+  link.download = "konspekt.pdf";
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+  return { success: true, message: "Файл сохранен" };
 };
 
 export async function clearPDFCache() {
@@ -258,6 +261,15 @@ export async function clearPDFCache() {
     throw error;
   }
 }
+
+export function downloadImage(canvas: HTMLCanvasElement, currentPage: number) {
+  if (!canvas) return;
+  const link = document.createElement("a");
+  link.download = `page-${currentPage}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
 export default {
   openPDFDatabase,
   savePDFToDB,
@@ -268,4 +280,5 @@ export default {
   handleCanvasClick,
   savePdf,
   clearPDFCache,
+  downloadImage,
 };
