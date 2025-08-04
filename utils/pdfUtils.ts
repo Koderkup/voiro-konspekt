@@ -38,6 +38,8 @@ const savePDFToDB = async (key: string, bytes: Uint8Array): Promise<void> => {
   }
 };
 
+
+
 const loadPDFFromDB = async (key: string): Promise<Uint8Array | null> => {
   if (typeof window !== "undefined") {
     const db = await openPDFDatabase();
@@ -62,6 +64,8 @@ const loadPDFFromDB = async (key: string): Promise<Uint8Array | null> => {
     throw new Error("Window is not defined");
   }
 };
+
+
 
 const wrapText = (
   ctx: CanvasRenderingContext2D,
@@ -132,6 +136,7 @@ export const renderPage = async (
 
 export const loadPDF = async (
   fileInput: HTMLInputElement,
+  key: string,
   savePDFToDB: (key: string, data: Uint8Array) => Promise<void>,
   setPdfDoc: (doc: any) => void,
   setPageCount: (count: number) => void,
@@ -143,7 +148,7 @@ export const loadPDF = async (
   const reader = new FileReader();
   reader.onload = async () => {
     const bytes = new Uint8Array(reader.result as ArrayBuffer);
-    await savePDFToDB("pdfRaw", bytes);
+    await savePDFToDB(key, bytes);
 
     const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
     setPdfDoc(doc);
@@ -153,8 +158,12 @@ export const loadPDF = async (
   reader.readAsArrayBuffer(file);
 };
 
+
+
+
 export const handleCanvasClick = (
   e: React.MouseEvent,
+  key: string,
   canvasRef: React.RefObject<HTMLCanvasElement>,
   textRef: React.RefObject<HTMLTextAreaElement>,
   pageNum: number,
@@ -176,19 +185,20 @@ export const handleCanvasClick = (
   const newItem = { text, page: pageNum, relativeX, relativeY };
   const newItems = [...textItems, newItem];
   setTextItems(newItems);
-  localStorage.setItem("textItems", JSON.stringify(newItems));
+  localStorage.setItem(key, JSON.stringify(newItems));
 
   renderPageFn(newItems);
 };
 
 export const savePdf = async (
   canvasRef: React.RefObject<HTMLCanvasElement>,
+  key: string,
   loadPDFFromDB: (key: string) => Promise<Uint8Array | null>,
   textItems: any[]
 ) => {
-  const pdfBytes = await loadPDFFromDB("pdfRaw");
+  const pdfBytes = await loadPDFFromDB(key);
   if (!pdfBytes || textItems.length === 0)
-     return { success: false, message: "Нет данных для сохранения" };
+    return { success: false, message: "Нет данных для сохранения" };
   const doc = await PDFDocument.load(pdfBytes);
   doc.registerFontkit(fontkit);
 
@@ -237,7 +247,7 @@ export const savePdf = async (
       });
     }
   }
-  const modifiedPdfBytes = await doc.save(); 
+  const modifiedPdfBytes = await doc.save();
   const blob = new Blob([new Uint8Array(modifiedPdfBytes)], {
     type: "application/pdf",
   });
@@ -249,18 +259,23 @@ export const savePdf = async (
   return { success: true, message: "Файл сохранен" };
 };
 
-export async function clearPDFCache() {
+
+
+export async function clearPDFCache(key: string) {
   try {
     const db = await openPDFDatabase();
     const tx = db.transaction("files", "readwrite");
-    await tx.objectStore("files").delete("pdfRaw");
-    localStorage.removeItem("textItems");
+    await tx.objectStore("files").delete(key);
+    localStorage.removeItem(key);
     location.reload();
   } catch (error) {
     console.error("Ошибка при очистке кэша: ", error);
     throw error;
   }
 }
+
+
+
 
 export function downloadImage(canvas: HTMLCanvasElement, currentPage: number) {
   if (!canvas) return;
