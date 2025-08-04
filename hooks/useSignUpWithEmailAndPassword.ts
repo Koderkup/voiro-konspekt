@@ -28,7 +28,7 @@ const useSignUpWithEmailAndPassword = () => {
       !inputs.fullName
     ) {
       showToast("Ошибка", "Пожалуйста, заполните все поля !", "error");
-      return;
+      return false;
     }
 
     const usersRef = collection(firestore, "users");
@@ -38,7 +38,7 @@ const useSignUpWithEmailAndPassword = () => {
 
     if (!querySnapshot.empty) {
       showToast("Error", "Username already exists", "error");
-      return;
+      return false;
     }
 
     try {
@@ -48,7 +48,7 @@ const useSignUpWithEmailAndPassword = () => {
       );
       if (!newUser && error) {
         showToast("Error", error.message, "error");
-        return;
+        return false;
       }
       if (newUser) {
         const userDoc: User = {
@@ -69,6 +69,7 @@ const useSignUpWithEmailAndPassword = () => {
           path: "/", 
         });
         loginUser(userDoc);
+        return true;
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -76,6 +77,7 @@ const useSignUpWithEmailAndPassword = () => {
       } else {
         showToast("Error", "An unexpected error occurred", "error");
       }
+      return false;
     }
   };
   return { loading, error, signup };

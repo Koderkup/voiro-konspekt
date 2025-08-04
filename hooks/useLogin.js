@@ -17,7 +17,8 @@ const useLogin = () => {
 
   const login = async (inputs) => {
     if (!inputs.email || !inputs.password) {
-      return showToast("Ошибка", "Пожалуйста, заполните все поля !", "error");
+      showToast("Ошибка", "Пожалуйста, заполните все поля !", "error");
+      return false;  
     }
     try {
       const userCred = await signInWithEmailAndPassword(
@@ -31,14 +32,17 @@ const useLogin = () => {
         const userData = docSnap.data();
          localStorage.setItem("user-info", JSON.stringify(userData));
 
-       Cookies.set("user-info", JSON.stringify(userDoc), {
-         expires: 30, 
-         path: "/", 
+       Cookies.set("user-info", JSON.stringify(userData), {
+         expires: 30,
+         path: "/",
        });
         loginUser(userData);
+        return true;
       }
+      return false;
     } catch (error) {
       showToast("Error", error.message, "error");
+      return false;
     }
   };
 

@@ -7,23 +7,23 @@ import useAuthStore from "../../store/authStore";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { User, GoogleAuthProps } from "../../types/user.dto";
 import Cookies from "js-cookie";
-
+import { useRouter } from "next/navigation";
 
 const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
   const [signInWithGoogle, , , error] = useSignInWithGoogle(auth);
   const showToast = useShowToast();
   const loginUser = useAuthStore((state) => state.login);
-
+  const router = useRouter();
   const handleGoogleAuth = async () => {
     try {
       const newUser = await signInWithGoogle();
       if (!newUser && error) {
         showToast("Error", error.message, "error");
-        return;
+        return false;
       }
       if (!newUser) {
         showToast("Error", "Ошибка входа через Google", "error");
-        return;
+        return false;
       }
       const userRef = doc(firestore, "users", newUser.user.uid);
       const userSnap = await getDoc(userRef);
@@ -37,6 +37,7 @@ const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
           path: "/",
         });
         loginUser(userDoc);
+        router.push("/");
       } else {
         // signup
         const userDoc: User = {
@@ -57,9 +58,11 @@ const GoogleAuth = ({ prefix }: GoogleAuthProps) => {
           path: "/",
         });
         loginUser(userDoc);
+        router.push("/");
       }
     } catch (error) {
       showToast("Error", (error as Error).message, "error");
+      return false;
     }
   };
 

@@ -17,6 +17,9 @@ import {
 import pdfUtils from "../../utils/pdfUtils";
 import useShowToast from "../../hooks/useShowToast";
 import { FaRegFile } from "react-icons/fa";
+import { useColorMode } from "../ui/color-mode";
+import { useUserStorageKey } from "../../hooks/useUserStorageKey";
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 const PdfEditor = () => {
@@ -29,6 +32,9 @@ const PdfEditor = () => {
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
   const [showIcon, setShowIcon] = useState(false);
+  const { colorMode } = useColorMode();
+  const { getKey, uid } = useUserStorageKey();
+  const key = getKey("pdfRaw");
 
   const handleResize = () => {
     if (window.innerWidth < 768) {
@@ -76,8 +82,8 @@ const PdfEditor = () => {
           const updated = [...prev];
           console.log(`Удаляем текст: "${updated[indexToRemove].text}"`);
           updated.splice(indexToRemove, 1);
-          localStorage.setItem("textItems", JSON.stringify(updated));
-          setTimeout(() => renderPageWithParams(pageNum), 0); 
+          localStorage.setItem(getKey("textItems"), JSON.stringify(updated));
+          setTimeout(() => renderPageWithParams(pageNum), 0);
           return updated;
         } else {
           console.log("Текст не найден для удаления.");
@@ -88,17 +94,15 @@ const PdfEditor = () => {
     [pageNum]
   );
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-
-useEffect(() => {
-  const canvas = canvasRef.current;
-  if (!canvas) return;
-
-  canvas.addEventListener("contextmenu", handleContextMenu);
-  return () => {
-    canvas.removeEventListener("contextmenu", handleContextMenu);
-  };
-}, [handleContextMenu]);
+    canvas.addEventListener("contextmenu", handleContextMenu);
+    return () => {
+      canvas.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [handleContextMenu]);
 
   const isRendering = useRef(false);
   const initialRenderDone = useRef(false);
@@ -131,6 +135,7 @@ useEffect(() => {
     if (!fileRef.current) return;
     loadPDF(
       fileRef.current,
+      key,
       savePDFToDB,
       setPdfDoc,
       setPageCount,
@@ -141,6 +146,7 @@ useEffect(() => {
   const canvasClickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
     handleCanvasClick(
       e,
+      getKey("textItems"),
       canvasRef,
       textRef,
       pageNum,
@@ -159,19 +165,19 @@ useEffect(() => {
         )
     );
   };
-const savePdfHandler = async () => {
-  const result = await savePdf(canvasRef, loadPDFFromDB, textItems);
-  if (result.success) {
-    showToast("Success", result.message, "success");
-  } else {
-    showToast("Error", result.message, "error");
-  }
-  console.log(result)
-};
+  const savePdfHandler = async () => {
+    const result = await savePdf(canvasRef, key, loadPDFFromDB, textItems);
+    if (result.success) {
+      showToast("Success", result.message, "success");
+    } else {
+      showToast("Error", result.message, "error");
+    }
+    console.log(result);
+  };
 
   const clearCacheHandler = async () => {
     try {
-      await clearPDFCache();
+      await clearPDFCache(key);
       showToast("Success", "Кэш очищен", "success");
     } catch (error) {
       showToast("Error", "Ошибка при очистке кэша", "error");
@@ -180,20 +186,21 @@ const savePdfHandler = async () => {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      const pdfBytes = await loadPDFFromDB("pdfRaw");
+      if (!uid || !fileRef.current) return;
+      const pdfBytes = await loadPDFFromDB(key);
       if (!pdfBytes) return;
 
       const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
       setPdfDoc(doc);
       setPageCount(doc.numPages);
 
-      const savedText = localStorage.getItem("textItems");
+      const savedText = localStorage.getItem(getKey("textItems"));
       if (savedText) {
         const parsed = JSON.parse(savedText);
         setTextItems(parsed);
       }
 
-      const savedPageNum = localStorage.getItem("lastPageNum");
+      const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
       if (savedPageNum) {
         setPageNum(parseInt(savedPageNum));
       }
@@ -225,7 +232,6 @@ const savePdfHandler = async () => {
       renderPageWithParams(pageNum);
     }
   }, [textItems]);
-
 
   return (
     <Flex direction="column" align="center" width="100%" p={4} gap={4}>
@@ -316,7 +322,7 @@ const savePdfHandler = async () => {
                     <Button
                       variant="subtle"
                       colorPalette="yellow"
-                      onClick={() => {}}
+                      onClick={() => downloadImage(canvasRef.current!, pageNum)}
                       style={{ width: "55%", margin: "6% auto" }}
                     >
                       📷 скрин страницы
@@ -351,6 +357,8 @@ const savePdfHandler = async () => {
               border: "1px solid #ccc",
               height: "auto",
               cursor: "crosshair",
+              filter:
+                colorMode === "dark" ? "invert(1) hue-rotate(180deg)" : "none",
             }}
           />
         </div>
@@ -362,7 +370,7 @@ const savePdfHandler = async () => {
           onClick={() => {
             const newPage = Math.max(1, pageNum - 1);
             setPageNum(newPage);
-            localStorage.setItem("lastPageNum", String(newPage));
+            localStorage.setItem(getKey("lastPageNum"), String(newPage));
           }}
         >
           ⬅
@@ -373,7 +381,7 @@ const savePdfHandler = async () => {
           onClick={() => {
             const newPage = Math.min(pageCount, pageNum + 1);
             setPageNum(newPage);
-            localStorage.setItem("lastPageNum", String(newPage));
+            localStorage.setItem(getKey("lastPageNum"), String(newPage));
           }}
         >
           ➡
@@ -421,6 +429,7 @@ const savePdfHandler = async () => {
           onChange={(e) => {
             const value = Number(e.target.value);
             if (value >= 1 && value <= pageCount) {
+              localStorage.setItem(getKey("lastPageNum"), String(value));
               setPageNum(value);
             }
           }}
