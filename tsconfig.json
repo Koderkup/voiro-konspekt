@@ -75,7 +75,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "hooks/useLogin.js"  ],
   "exclude": [
     "node_modules"
   ]

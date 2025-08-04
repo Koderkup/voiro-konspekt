@@ -17,6 +17,7 @@ import {
 import pdfUtils from "../../utils/pdfUtils";
 import useShowToast from "../../hooks/useShowToast";
 import { FaRegFile } from "react-icons/fa";
+import { useColorMode } from "../ui/color-mode";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 const PdfEditor = () => {
@@ -29,6 +30,7 @@ const PdfEditor = () => {
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
   const [showIcon, setShowIcon] = useState(false);
+  const { colorMode } = useColorMode();
 
   const handleResize = () => {
     if (window.innerWidth < 768) {
@@ -77,7 +79,7 @@ const PdfEditor = () => {
           console.log(`Удаляем текст: "${updated[indexToRemove].text}"`);
           updated.splice(indexToRemove, 1);
           localStorage.setItem("textItems", JSON.stringify(updated));
-          setTimeout(() => renderPageWithParams(pageNum), 0); 
+          setTimeout(() => renderPageWithParams(pageNum), 0);
           return updated;
         } else {
           console.log("Текст не найден для удаления.");
@@ -88,17 +90,15 @@ const PdfEditor = () => {
     [pageNum]
   );
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-
-useEffect(() => {
-  const canvas = canvasRef.current;
-  if (!canvas) return;
-
-  canvas.addEventListener("contextmenu", handleContextMenu);
-  return () => {
-    canvas.removeEventListener("contextmenu", handleContextMenu);
-  };
-}, [handleContextMenu]);
+    canvas.addEventListener("contextmenu", handleContextMenu);
+    return () => {
+      canvas.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [handleContextMenu]);
 
   const isRendering = useRef(false);
   const initialRenderDone = useRef(false);
@@ -159,15 +159,15 @@ useEffect(() => {
         )
     );
   };
-const savePdfHandler = async () => {
-  const result = await savePdf(canvasRef, loadPDFFromDB, textItems);
-  if (result.success) {
-    showToast("Success", result.message, "success");
-  } else {
-    showToast("Error", result.message, "error");
-  }
-  console.log(result)
-};
+  const savePdfHandler = async () => {
+    const result = await savePdf(canvasRef, loadPDFFromDB, textItems);
+    if (result.success) {
+      showToast("Success", result.message, "success");
+    } else {
+      showToast("Error", result.message, "error");
+    }
+    console.log(result);
+  };
 
   const clearCacheHandler = async () => {
     try {
@@ -225,7 +225,6 @@ const savePdfHandler = async () => {
       renderPageWithParams(pageNum);
     }
   }, [textItems]);
-
 
   return (
     <Flex direction="column" align="center" width="100%" p={4} gap={4}>
@@ -351,6 +350,8 @@ const savePdfHandler = async () => {
               border: "1px solid #ccc",
               height: "auto",
               cursor: "crosshair",
+              filter:
+              colorMode === "dark" ? "invert(1) hue-rotate(180deg)" : "none",
             }}
           />
         </div>
