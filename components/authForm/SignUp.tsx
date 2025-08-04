@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Input, Button, Alert, Box } from "@chakra-ui/react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import useSignUpWithEmailAndPassword from "../../hooks/useSignUpWithEmailAndPassword";
-
+import { useRouter } from "next/navigation";
 
 const SignUp = () => {
   const [inputs, setInputs] = useState({
@@ -14,11 +14,16 @@ const SignUp = () => {
   });
   const { loading, error, signup } = useSignUpWithEmailAndPassword();
   const [showPassword, setShowPassword] = useState(false);
-
+  const router = useRouter();
   const handleChange = (e: any) => {
     setInputs((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-  
+const handleSignup = async () => {
+  const success = await signup(inputs);
+  if (success) {
+    router.push("/"); // редирект на главную
+  }
+};
   return (
     <>
       <Input
@@ -85,9 +90,7 @@ const SignUp = () => {
         size={"sm"}
         fontSize={14}
         loading={loading}
-        onClick={() => {
-        signup(inputs);
-        }}
+        onClick={handleSignup}
       >
         Регистрация
       </Button>
