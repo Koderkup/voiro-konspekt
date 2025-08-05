@@ -281,7 +281,6 @@ export function convertGitHubBlobToRaw(blobUrl: string) {
   return `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${path}`;
 }
 
-
 export default {
   openPDFDatabase,
   savePDFToDB,

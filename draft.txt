@@ -346,3 +346,30 @@ cp node_modules/pdfjs-dist/build/pdf.worker.min.js public/pdf.worker.min.js
 // };
 
 // export default PdfEditor;
+
+
+
+// useEffect(() => {
+  //   const loadInitialData = async () => {
+  //     if (!uid || !fileRef.current) return;
+  //     const pdfBytes = await loadPDFFromDB(key);
+  //     if (!pdfBytes) return;
+
+  //     const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+  //     setPdfDoc(doc);
+  //     setPageCount(doc.numPages);
+
+  //     const savedText = localStorage.getItem(getKey("textItems"));
+  //     if (savedText) {
+  //       const parsed = JSON.parse(savedText);
+  //       setTextItems(parsed);
+  //     }
+
+  //     const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
+  //     if (savedPageNum) {
+  //       setPageNum(parseInt(savedPageNum));
+  //     }
+  //   };
+
+  //   loadInitialData();
+  // }, []);

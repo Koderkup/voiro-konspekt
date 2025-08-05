@@ -1,5 +1,11 @@
 "use client";
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import {
   Button,
@@ -20,6 +26,7 @@ import { FaRegFile } from "react-icons/fa";
 import { useColorMode } from "../ui/color-mode";
 import { useUserStorageKey } from "../../hooks/useUserStorageKey";
 import useAuthStore from "../../store/authStore";
+import Loading from "../Loading/Loading";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
@@ -28,11 +35,29 @@ const PdfEditor = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
+
+  const { colorMode } = useColorMode();
+  const { getKey, uid } = useUserStorageKey();
+  const key = getKey("pdfRaw");
+  const user = useAuthStore((state) => state.user);
+  const [textKey, setTextKey] = useState(getKey("textItems"));
+  const [fingerprint, setFingerprint] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (pdfDoc?.fingerprints?.[0]) {
+      const fp = pdfDoc.fingerprints[0];
+      setFingerprint(fp);
+      setTextKey(getKey(`textItems_${fp}`));
+    }
+  }, [pdfDoc, getKey]);
+
   const [pageNum, setPageNum] = useState(1);
   const [pageCount, setPageCount] = useState(0);
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
   const [showIcon, setShowIcon] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   const {
     savePDFToDB,
     loadPDFFromDB,
@@ -45,12 +70,6 @@ const PdfEditor = () => {
     downloadImage,
     convertGitHubBlobToRaw,
   } = pdfUtils;
-
-  const { colorMode } = useColorMode();
-  const { getKey, uid } = useUserStorageKey();
-  const key = getKey("pdfRaw");
-  const user = useAuthStore((state) => state.user);
-  
 
   const handleResize = () => {
     if (window.innerWidth < 768) {
@@ -98,7 +117,7 @@ const PdfEditor = () => {
           const updated = [...prev];
           console.log(`Удаляем текст: "${updated[indexToRemove].text}"`);
           updated.splice(indexToRemove, 1);
-          localStorage.setItem(getKey("textItems"), JSON.stringify(updated));
+          localStorage.setItem(textKey, JSON.stringify(updated));
           setTimeout(() => renderPageWithParams(pageNum), 0);
           return updated;
         } else {
@@ -151,7 +170,7 @@ const PdfEditor = () => {
   const canvasClickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
     handleCanvasClick(
       e,
-      getKey("textItems"),
+      textKey,
       canvasRef,
       textRef,
       pageNum,
@@ -188,86 +207,63 @@ const PdfEditor = () => {
       showToast("Error", "Ошибка при очистке кэша", "error");
     }
   };
-
-  // useEffect(() => {
-  //   const loadInitialData = async () => {
-  //     if (!uid || !fileRef.current) return;
-  //     const pdfBytes = await loadPDFFromDB(key);
-  //     if (!pdfBytes) return;
-
-  //     const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-  //     setPdfDoc(doc);
-  //     setPageCount(doc.numPages);
-
-  //     const savedText = localStorage.getItem(getKey("textItems"));
-  //     if (savedText) {
-  //       const parsed = JSON.parse(savedText);
-  //       setTextItems(parsed);
-  //     }
-
-  //     const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
-  //     if (savedPageNum) {
-  //       setPageNum(parseInt(savedPageNum));
-  //     }
-  //   };
-
-  //   loadInitialData();
-  // }, []);
-
-useEffect(() => {
-  const loadInitialData = async () => {
-    if (!uid) return;
-
-    const pdfBytes = await loadPDFFromDB(key);
-    if (pdfBytes) {
-      const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-      setPdfDoc(doc);
-      setPageCount(doc.numPages);
-
-      const savedText = localStorage.getItem(getKey("textItems"));
-      if (savedText) {
-        setTextItems(JSON.parse(savedText));
-      }
-
-      const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
-      if (savedPageNum) {
-        setPageNum(parseInt(savedPageNum));
-      }
-    } else {
-      // Если PDF не найден — загружаем по ссылке из accessibleNotes
-      const noteUrl = user?.accessibleNotes?.[0]?.url;
-      if (!noteUrl) return;
-
-      const rawUrl = convertGitHubBlobToRaw(noteUrl);
-      try {
-        const response = await fetch(rawUrl);
-        if (!response.ok) throw new Error("Ошибка загрузки PDF");
-
-        const pdfData = await response.arrayBuffer();
-        await savePDFToDB(key, new Uint8Array(pdfData));
-
-        const doc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+  
+  useEffect(() => {
+    const loadInitialData = async () => {
+      if (!uid) return;
+      setIsLoading(true);
+      const pdfBytes = await loadPDFFromDB(key);
+      if (pdfBytes) {
+        const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
         setPdfDoc(doc);
         setPageCount(doc.numPages);
-        setTextItems([]);
-        setPageNum(1);
-        renderPageWithParams(1);
-        let hasShownToast = false;
-        if (!hasShownToast) {
-          showToast("Success", "PDF загружен из доступной заметки", "success");
-          hasShownToast = true;
+        const savedText = localStorage.getItem(textKey);
+        if (savedText) {
+          setTextItems(JSON.parse(savedText));
         }
 
-      } catch (err) {
-        console.error(err);
-        showToast("Error", "Не удалось загрузить PDF по ссылке", "error");
+        const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
+        if (savedPageNum) {
+          setPageNum(parseInt(savedPageNum));
+        }
+        setIsLoading(false);
+      } else {
+        // Если PDF не найден — загружаем по ссылке из accessibleNotes
+        const noteUrl = user?.accessibleNotes?.[0]?.url;
+        if (!noteUrl) return;
+
+        const rawUrl = convertGitHubBlobToRaw(noteUrl);
+        try {
+          const response = await fetch(rawUrl);
+          if (!response.ok) throw new Error("Ошибка загрузки PDF");
+
+          const pdfData = await response.arrayBuffer();
+          await savePDFToDB(key, new Uint8Array(pdfData));
+
+          const doc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+          setPdfDoc(doc);
+          setPageCount(doc.numPages);
+          setTextItems([]);
+          setPageNum(1);
+          renderPageWithParams(1);
+          let hasShownToast = false;
+          if (!hasShownToast) {
+            showToast(
+              "Success",
+              "PDF загружен из доступной заметки",
+              "success"
+            );
+            hasShownToast = true;
+          }
+        } catch (err) {
+          console.error(err);
+          showToast("Error", "Не удалось загрузить PDF по ссылке", "error");
+        }
       }
-    }
-  };
+    };
 
-  loadInitialData();
-}, []);
-
+    loadInitialData();
+  }, [textKey]);
 
   useEffect(() => {
     if (
@@ -293,7 +289,9 @@ useEffect(() => {
     }
   }, [textItems]);
 
-  return (
+  return isLoading ? (
+    <Loading />
+  ) : (
     <Flex direction="column" align="center" width="100%" p={4} gap={4}>
       <Flex justify="space-between" width="100%" wrap="wrap" gap={2}>
         <Input
