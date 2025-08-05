@@ -38,8 +38,6 @@ const savePDFToDB = async (key: string, bytes: Uint8Array): Promise<void> => {
   }
 };
 
-
-
 const loadPDFFromDB = async (key: string): Promise<Uint8Array | null> => {
   if (typeof window !== "undefined") {
     const db = await openPDFDatabase();
@@ -64,8 +62,6 @@ const loadPDFFromDB = async (key: string): Promise<Uint8Array | null> => {
     throw new Error("Window is not defined");
   }
 };
-
-
 
 const wrapText = (
   ctx: CanvasRenderingContext2D,
@@ -157,9 +153,6 @@ export const loadPDF = async (
   };
   reader.readAsArrayBuffer(file);
 };
-
-
-
 
 export const handleCanvasClick = (
   e: React.MouseEvent,
@@ -259,8 +252,6 @@ export const savePdf = async (
   return { success: true, message: "Файл сохранен" };
 };
 
-
-
 export async function clearPDFCache(key: string) {
   try {
     const db = await openPDFDatabase();
@@ -274,9 +265,6 @@ export async function clearPDFCache(key: string) {
   }
 }
 
-
-
-
 export function downloadImage(canvas: HTMLCanvasElement, currentPage: number) {
   if (!canvas) return;
   const link = document.createElement("a");
@@ -284,6 +272,15 @@ export function downloadImage(canvas: HTMLCanvasElement, currentPage: number) {
   link.href = canvas.toDataURL("image/png");
   link.click();
 }
+export function convertGitHubBlobToRaw(blobUrl: string) {
+  const match = blobUrl.match(
+    /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)$/
+  );
+  if (!match) return blobUrl;
+  const [, user, repo, branch, path] = match;
+  return `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${path}`;
+}
+
 
 export default {
   openPDFDatabase,
@@ -296,4 +293,5 @@ export default {
   savePdf,
   clearPDFCache,
   downloadImage,
+  convertGitHubBlobToRaw,
 };

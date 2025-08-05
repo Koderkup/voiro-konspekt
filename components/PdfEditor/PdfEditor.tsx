@@ -19,6 +19,7 @@ import useShowToast from "../../hooks/useShowToast";
 import { FaRegFile } from "react-icons/fa";
 import { useColorMode } from "../ui/color-mode";
 import { useUserStorageKey } from "../../hooks/useUserStorageKey";
+import useAuthStore from "../../store/authStore";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
@@ -32,9 +33,24 @@ const PdfEditor = () => {
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
   const [showIcon, setShowIcon] = useState(false);
+  const {
+    savePDFToDB,
+    loadPDFFromDB,
+    wrapText,
+    renderPage,
+    loadPDF,
+    handleCanvasClick,
+    savePdf,
+    clearPDFCache,
+    downloadImage,
+    convertGitHubBlobToRaw,
+  } = pdfUtils;
+
   const { colorMode } = useColorMode();
   const { getKey, uid } = useUserStorageKey();
   const key = getKey("pdfRaw");
+  const user = useAuthStore((state) => state.user);
+  
 
   const handleResize = () => {
     if (window.innerWidth < 768) {
@@ -107,17 +123,6 @@ const PdfEditor = () => {
   const isRendering = useRef(false);
   const initialRenderDone = useRef(false);
   const showToast = useShowToast();
-  const {
-    savePDFToDB,
-    loadPDFFromDB,
-    wrapText,
-    renderPage,
-    loadPDF,
-    handleCanvasClick,
-    savePdf,
-    clearPDFCache,
-    downloadImage,
-  } = pdfUtils;
 
   const renderPageWithParams = (n: number) =>
     renderPage(
@@ -184,30 +189,85 @@ const PdfEditor = () => {
     }
   };
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (!uid || !fileRef.current) return;
-      const pdfBytes = await loadPDFFromDB(key);
-      if (!pdfBytes) return;
+  // useEffect(() => {
+  //   const loadInitialData = async () => {
+  //     if (!uid || !fileRef.current) return;
+  //     const pdfBytes = await loadPDFFromDB(key);
+  //     if (!pdfBytes) return;
 
+  //     const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+  //     setPdfDoc(doc);
+  //     setPageCount(doc.numPages);
+
+  //     const savedText = localStorage.getItem(getKey("textItems"));
+  //     if (savedText) {
+  //       const parsed = JSON.parse(savedText);
+  //       setTextItems(parsed);
+  //     }
+
+  //     const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
+  //     if (savedPageNum) {
+  //       setPageNum(parseInt(savedPageNum));
+  //     }
+  //   };
+
+  //   loadInitialData();
+  // }, []);
+
+useEffect(() => {
+  const loadInitialData = async () => {
+    if (!uid) return;
+
+    const pdfBytes = await loadPDFFromDB(key);
+    if (pdfBytes) {
       const doc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
       setPdfDoc(doc);
       setPageCount(doc.numPages);
 
       const savedText = localStorage.getItem(getKey("textItems"));
       if (savedText) {
-        const parsed = JSON.parse(savedText);
-        setTextItems(parsed);
+        setTextItems(JSON.parse(savedText));
       }
 
       const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
       if (savedPageNum) {
         setPageNum(parseInt(savedPageNum));
       }
-    };
+    } else {
+      // Если PDF не найден — загружаем по ссылке из accessibleNotes
+      const noteUrl = user?.accessibleNotes?.[0]?.url;
+      if (!noteUrl) return;
 
-    loadInitialData();
-  }, []);
+      const rawUrl = convertGitHubBlobToRaw(noteUrl);
+      try {
+        const response = await fetch(rawUrl);
+        if (!response.ok) throw new Error("Ошибка загрузки PDF");
+
+        const pdfData = await response.arrayBuffer();
+        await savePDFToDB(key, new Uint8Array(pdfData));
+
+        const doc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        setPdfDoc(doc);
+        setPageCount(doc.numPages);
+        setTextItems([]);
+        setPageNum(1);
+        renderPageWithParams(1);
+        let hasShownToast = false;
+        if (!hasShownToast) {
+          showToast("Success", "PDF загружен из доступной заметки", "success");
+          hasShownToast = true;
+        }
+
+      } catch (err) {
+        console.error(err);
+        showToast("Error", "Не удалось загрузить PDF по ссылке", "error");
+      }
+    }
+  };
+
+  loadInitialData();
+}, []);
+
 
   useEffect(() => {
     if (
