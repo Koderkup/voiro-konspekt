@@ -42,7 +42,7 @@ const PdfEditor = () => {
   const user = useAuthStore((state) => state.user);
   const [textKey, setTextKey] = useState(getKey("textItems"));
   const [fingerprint, setFingerprint] = useState<string | null>(null);
-  
+   const [pageNum, setPageNum] = useState(1);
   useEffect(() => {
     if (pdfDoc?.fingerprints?.[0]) {
       const fp = pdfDoc.fingerprints[0];
@@ -51,7 +51,6 @@ const PdfEditor = () => {
     }
   }, [pdfDoc, getKey]);
 
-  const [pageNum, setPageNum] = useState(1);
   const [pageCount, setPageCount] = useState(0);
   const [textItems, setTextItems] = useState<any[]>([]);
   const [scale, setScale] = useState(1.2);
@@ -222,7 +221,9 @@ const PdfEditor = () => {
           setTextItems(JSON.parse(savedText));
         }
 
-        const savedPageNum = localStorage.getItem(getKey("lastPageNum"));
+        const savedPageNum = localStorage.getItem(
+          getKey(`lastPageNum_${fingerprint}`)
+        );
         if (savedPageNum) {
           setPageNum(parseInt(savedPageNum));
         }
@@ -428,7 +429,10 @@ const PdfEditor = () => {
           onClick={() => {
             const newPage = Math.max(1, pageNum - 1);
             setPageNum(newPage);
-            localStorage.setItem(getKey("lastPageNum"), String(newPage));
+            localStorage.setItem(
+              getKey(`lastPageNum_${fingerprint}`),
+              String(newPage)
+            );
           }}
         >
           ⬅
@@ -439,7 +443,10 @@ const PdfEditor = () => {
           onClick={() => {
             const newPage = Math.min(pageCount, pageNum + 1);
             setPageNum(newPage);
-            localStorage.setItem(getKey("lastPageNum"), String(newPage));
+            localStorage.setItem(
+              getKey(`lastPageNum_${fingerprint}`),
+              String(newPage)
+            );
           }}
         >
           ➡
@@ -487,7 +494,10 @@ const PdfEditor = () => {
           onChange={(e) => {
             const value = Number(e.target.value);
             if (value >= 1 && value <= pageCount) {
-              localStorage.setItem(getKey("lastPageNum"), String(value));
+              localStorage.setItem(
+                getKey(`lastPageNum_${fingerprint}`),
+                String(value)
+              );
               setPageNum(value);
             }
           }}
