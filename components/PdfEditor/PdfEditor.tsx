@@ -126,7 +126,7 @@ const PdfEditor = () => {
         }
       });
     },
-    [pageNum]
+    [pageNum, textItems, textKey]
   );
 
   useEffect(() => {
