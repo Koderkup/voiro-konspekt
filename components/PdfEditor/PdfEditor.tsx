@@ -267,29 +267,13 @@ const PdfEditor = () => {
   }, [textKey]);
 
   useEffect(() => {
-    if (
-      pdfDoc &&
-      canvasRef.current &&
-      !initialRenderDone.current &&
-      textItems.length >= 0
-    ) {
+    if (!pdfDoc || !canvasRef.current) return;
+    if (!initialRenderDone.current && textItems.length >= 0) {
       initialRenderDone.current = true;
-      renderPageWithParams(pageNum);
     }
-  }, [pdfDoc, textItems]);
-
-  useEffect(() => {
-    if (pdfDoc && canvasRef.current && initialRenderDone.current) {
-      renderPageWithParams(pageNum);
-    }
-  }, [pageNum, scale]);
-
-  useEffect(() => {
-    if (pdfDoc && canvasRef.current) {
-      renderPageWithParams(pageNum);
-    }
-  }, [textItems]);
-
+    renderPageWithParams(pageNum);
+  }, [pdfDoc, textItems, pageNum, scale]);
+  
   return isLoading ? (
     <Loading />
   ) : (

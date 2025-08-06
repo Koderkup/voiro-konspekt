@@ -373,3 +373,30 @@ cp node_modules/pdfjs-dist/build/pdf.worker.min.js public/pdf.worker.min.js
 
   //   loadInitialData();
   // }, []);
+
+
+
+
+  useEffect(() => {
+    if (
+      pdfDoc &&
+      canvasRef.current &&
+      !initialRenderDone.current &&
+      textItems.length >= 0
+    ) {
+      initialRenderDone.current = true;
+      renderPageWithParams(pageNum);
+    }
+  }, [pdfDoc, textItems]);
+
+  useEffect(() => {
+    if (pdfDoc && canvasRef.current && initialRenderDone.current) {
+      renderPageWithParams(pageNum);
+    }
+  }, [pageNum, scale]);
+
+  useEffect(() => {
+    if (pdfDoc && canvasRef.current) {
+      renderPageWithParams(pageNum);
+    }
+  }, [textItems]);
