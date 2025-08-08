@@ -27,6 +27,9 @@ import { useColorMode } from "../ui/color-mode";
 import { useUserStorageKey } from "../../hooks/useUserStorageKey";
 import useAuthStore from "../../store/authStore";
 import Loading from "../Loading/Loading";
+import { TextItem } from "../../types/types";
+import { useCanvasDrag } from "../../hooks/useCanvasDrag";
+import RangeInput from "../rangeInput/RangeInput";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
@@ -35,14 +38,15 @@ const PdfEditor = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
-
+  const [fontValue, setFontValue] = useState(16);
+  const [lineValue, setLineValue] = useState(300);
   const { colorMode } = useColorMode();
   const { getKey, uid } = useUserStorageKey();
   const key = getKey("pdfRaw");
   const user = useAuthStore((state) => state.user);
   const [textKey, setTextKey] = useState(getKey("textItems"));
   const [fingerprint, setFingerprint] = useState<string | null>(null);
-   const [pageNum, setPageNum] = useState(1);
+  const [pageNum, setPageNum] = useState(1);
   useEffect(() => {
     if (pdfDoc?.fingerprints?.[0]) {
       const fp = pdfDoc.fingerprints[0];
@@ -52,7 +56,7 @@ const PdfEditor = () => {
   }, [pdfDoc, getKey]);
 
   const [pageCount, setPageCount] = useState(0);
-  const [textItems, setTextItems] = useState<any[]>([]);
+  const [textItems, setTextItems] = useState<TextItem[]>([]);
   const [scale, setScale] = useState(1.2);
   const [showIcon, setShowIcon] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -206,7 +210,7 @@ const PdfEditor = () => {
       showToast("Error", "Ошибка при очистке кэша", "error");
     }
   };
-  
+
   useEffect(() => {
     const loadInitialData = async () => {
       if (!uid) return;
@@ -273,7 +277,22 @@ const PdfEditor = () => {
     }
     renderPageWithParams(pageNum);
   }, [pdfDoc, textItems, pageNum, scale]);
-  
+
+  useCanvasDrag({
+    canvasRef,
+    textItems,
+    pageNum,
+    ctx: canvasRef.current?.getContext("2d")!,
+    onUpdate: (updatedItems) => {
+      setTextItems(updatedItems);
+      localStorage.setItem(textKey, JSON.stringify(updatedItems));
+    },
+    onRender: () => {
+      console.log("render");
+      renderPageWithParams(pageNum);
+    },
+  });
+
   return isLoading ? (
     <Loading />
   ) : (
@@ -327,7 +346,7 @@ const PdfEditor = () => {
             <Portal>
               <Drawer.Backdrop />
               <Drawer.Positioner>
-                <Drawer.Content bg="rgba(255, 255, 255, 0.8)" maxH="40vh">
+                <Drawer.Content bg="rgba(255, 255, 255, 0.8)" maxH="45vh">
                   <Drawer.Header>
                     <Drawer.Title>Файловые кнопки</Drawer.Title>
                   </Drawer.Header>
@@ -473,6 +492,7 @@ const PdfEditor = () => {
       <Kbd color="blue.500">Перейти к странице:</Kbd>
       <NumberInput.Root defaultValue={pageNum.toString()}>
         <NumberInput.Input
+          color="blue.500"
           min={1}
           max={pageCount}
           onChange={(e) => {
@@ -487,6 +507,12 @@ const PdfEditor = () => {
           }}
         />
       </NumberInput.Root>
+      <RangeInput
+        fontValue={fontValue}
+        lineValue={lineValue}
+        setFontValue={setFontValue}
+        setLineValue={setLineValue}
+      />
     </Flex>
   );
 };
