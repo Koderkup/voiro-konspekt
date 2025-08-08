@@ -155,7 +155,9 @@ const PdfEditor = () => {
       scale,
       setPageNum,
       wrapText,
-      isRendering
+      isRendering,
+      fontValue,
+      lineValue
     );
 
   const loadPDFHandler = () => {
@@ -188,8 +190,12 @@ const PdfEditor = () => {
           scale,
           setPageNum,
           wrapText,
-          isRendering
-        )
+          isRendering,
+          fontValue,
+          lineValue
+        ),
+      fontValue,
+      lineValue
     );
   };
   const savePdfHandler = async () => {
@@ -288,7 +294,6 @@ const PdfEditor = () => {
       localStorage.setItem(textKey, JSON.stringify(updatedItems));
     },
     onRender: () => {
-      console.log("render");
       renderPageWithParams(pageNum);
     },
   });
