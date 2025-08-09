@@ -630,3 +630,127 @@ export const renderPage = async (
 
 //   renderPageFn(newItems);
 // };
+
+
+
+
+useEffect drag-n-drop
+
+ useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !pdfDoc) return;
+
+    let draggingItem: TextItem | null = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    const getCoords = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((clientX - rect.left) * canvas.width) / rect.width,
+        y: ((clientY - rect.top) * canvas.height) / rect.height,
+      };
+    };
+
+    const mouseDown = (e: MouseEvent) => {
+      const { x, y } = getCoords(e.clientX, e.clientY);
+      for (const item of textItems) {
+        if (item.page !== pageNum) continue;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
+
+        const metrics = ctx.measureText(item.text);
+        const w = metrics.width;
+        const h = 20;
+
+        const itemX = item.relativeX * canvas.width;
+        const itemY = item.relativeY * canvas.height;
+
+        if (x >= itemX && x <= itemX + w && y >= itemY && y <= itemY + h) {
+          draggingItem = item;
+          dragOffsetX = x - itemX;
+          dragOffsetY = y - itemY;
+          if (navigator.vibrate) navigator.vibrate(50);
+          break;
+        }
+      }
+    };
+
+    const mouseMove = (e: MouseEvent) => {
+      if (!draggingItem) return;
+      const { x, y } = getCoords(e.clientX, e.clientY);
+      draggingItem.relativeX = (x - dragOffsetX) / canvas.width;
+      draggingItem.relativeY = (y - dragOffsetY) / canvas.height;
+      localStorage.setItem(textKey, JSON.stringify(textItems));
+    };
+
+    const mouseUp = () => {
+      if (draggingItem) {
+        draggingItem = null;
+        renderPageWithParams(pageNum);
+        setTextItems([...textItems]); // обновляем состояние
+      }
+    };
+
+    const touchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const { x, y } = getCoords(touch.clientX, touch.clientY);
+      for (const item of textItems) {
+        if (item.page !== pageNum) continue;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
+
+        const metrics = ctx.measureText(item.text);
+        const w = metrics.width;
+        const h = 20;
+
+        const itemX = item.relativeX * canvas.width;
+        const itemY = item.relativeY * canvas.height;
+
+        if (x >= itemX && x <= itemX + w && y >= itemY && y <= itemY + h) {
+          draggingItem = item;
+          dragOffsetX = x - itemX;
+          dragOffsetY = y - itemY;
+          if (navigator.vibrate) navigator.vibrate(50);
+          break;
+        }
+      }
+    };
+
+    const touchMove = (e: TouchEvent) => {
+      if (!draggingItem) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const { x, y } = getCoords(touch.clientX, touch.clientY);
+      draggingItem.relativeX = (x - dragOffsetX) / canvas.width;
+      draggingItem.relativeY = (y - dragOffsetY) / canvas.height;
+      localStorage.setItem(textKey, JSON.stringify(textItems));
+    };
+
+    const touchEnd = () => {
+      if (draggingItem) {
+        draggingItem = null;
+        renderPageWithParams(pageNum);
+        setTextItems([...textItems]);
+      }
+    };
+
+    canvas.addEventListener("mousedown", mouseDown);
+    canvas.addEventListener("mousemove", mouseMove);
+    canvas.addEventListener("mouseup", mouseUp);
+    canvas.addEventListener("touchstart", touchStart);
+    canvas.addEventListener("touchmove", touchMove, { passive: false });
+    canvas.addEventListener("touchend", touchEnd);
+
+    return () => {
+      canvas.removeEventListener("mousedown", mouseDown);
+      canvas.removeEventListener("mousemove", mouseMove);
+      canvas.removeEventListener("mouseup", mouseUp);
+      canvas.removeEventListener("touchstart", touchStart);
+      canvas.removeEventListener("touchmove", touchMove);
+      canvas.removeEventListener("touchend", touchEnd);
+    };
+  }, [canvasRef, textItems, pageNum, renderPageWithParams, textKey]);
+

@@ -9,6 +9,7 @@ export function useCanvasDrag({
   ctx,
   onUpdate,
   onRender,
+  dragReady,
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   textItems: TextItem[];
@@ -16,13 +17,14 @@ export function useCanvasDrag({
   ctx: CanvasRenderingContext2D;
   onUpdate: (updatedItems: TextItem[]) => void;
   onRender: () => void;
+  dragReady: boolean;
 }) {
   const draggingIndexRef = useRef<number | null>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
-
+  
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx || !dragReady) return;
 
     const getCoords = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
@@ -84,6 +86,7 @@ export function useCanvasDrag({
 
     // Events
     const mouseDown = (e: MouseEvent) => {
+      console.log("mousedown на canvas");
       const { x, y } = getCoords(e.clientX, e.clientY);
       handleStart(x, y);
     };
@@ -119,5 +122,14 @@ export function useCanvasDrag({
       canvas.removeEventListener("touchmove", touchMove);
       canvas.removeEventListener("touchend", touchEnd);
     };
-  }, [canvasRef, textItems, pageNum, ctx, onUpdate, onRender]);
+  }, [
+    canvasRef,
+    ctx,
+    textItems,
+    textItems.length,
+    pageNum,
+    onUpdate,
+    onRender,
+    dragReady
+  ]);
 }
