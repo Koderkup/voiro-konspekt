@@ -3,6 +3,6 @@ export interface TextItem {
   page: number;
   relativeX: number;
   relativeY: number;
-  fontSize?: number;
+  fontSize: number;
   lineWidth?: number;
 }
