@@ -111,8 +111,13 @@ export const renderPage = async (
 
   const page = await pdfDoc.getPage(pageNum);
   const viewport = page.getViewport({ scale });
-  const canvas = canvasRef.current!;
-  const ctx = canvas.getContext("2d")!;
+  const canvas = canvasRef.current;
+  const ctx = canvas?.getContext("2d");
+  if (!canvas || !ctx) {
+    isRenderingRef.current = false;
+    return;
+  }
+
   canvas.width = viewport.width;
   canvas.height = viewport.height;
 
@@ -164,35 +169,6 @@ export const loadPDF = async (
   };
   reader.readAsArrayBuffer(file);
 };
-
-// export const handleCanvasClick = (
-//   e: React.MouseEvent,
-//   key: string,
-//   canvasRef: React.RefObject<HTMLCanvasElement>,
-//   textRef: React.RefObject<HTMLTextAreaElement>,
-//   pageNum: number,
-//   textItems: any[],
-//   setTextItems: (items: any[]) => void,
-//   renderPageFn: (updatedItems: any[]) => void
-// ) => {
-//   const canvas = canvasRef.current!;
-//   const rect = canvas.getBoundingClientRect();
-//   const canvasX = ((e.clientX - rect.left) * canvas.width) / rect.width;
-//   const canvasY = ((e.clientY - rect.top) * canvas.height) / rect.height;
-
-//   const relativeX = canvasX / canvas.width;
-//   const relativeY = canvasY / canvas.height;
-
-//   const text = textRef.current?.value.trim();
-//   if (!text) return;
-
-//   const newItem = { text, page: pageNum, relativeX, relativeY };
-//   const newItems = [...textItems, newItem];
-//   setTextItems(newItems);
-//   localStorage.setItem(key, JSON.stringify(newItems));
-
-//   renderPageFn(newItems);
-// };
 
 export const handleCanvasClick = (
   e: React.MouseEvent,
