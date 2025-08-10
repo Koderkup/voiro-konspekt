@@ -47,14 +47,7 @@ const PdfEditor = () => {
   const [textKey, setTextKey] = useState(getKey("textItems"));
   const [fingerprint, setFingerprint] = useState<string | null>(null);
   const [pageNum, setPageNum] = useState(1);
-  useEffect(() => {
-    if (pdfDoc?.fingerprints?.[0]) {
-      const fp = pdfDoc.fingerprints[0];
-      setFingerprint(fp);
-      setTextKey(getKey(`textItems_${fp}`));
-    }
-  }, [pdfDoc, getKey]);
-
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [textItems, setTextItems] = useState<TextItem[]>([]);
   const [scale, setScale] = useState(1.2);
@@ -73,6 +66,14 @@ const PdfEditor = () => {
     downloadImage,
     convertGitHubBlobToRaw,
   } = pdfUtils;
+
+  useEffect(() => {
+    if (pdfDoc?.fingerprints?.[0]) {
+      const fp = pdfDoc.fingerprints[0];
+      setFingerprint(fp);
+      setTextKey(getKey(`textItems_${fp}`));
+    }
+  }, [pdfDoc, getKey]);
 
   const handleResize = () => {
     if (window.innerWidth < 768) {
@@ -233,6 +234,55 @@ const PdfEditor = () => {
     renderPageWithParams(pageNum);
   }, [pdfDoc, textItems, pageNum, scale]);
 
+  const handleContextMenu = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = Math.round(
+        ((e.clientX - rect.left) * canvas.width) / rect.width
+      );
+      const canvasY = Math.round(
+        ((e.clientY - rect.top) * canvas.height) / rect.height
+      );
+
+      const index = textItems.findIndex((item) => {
+        const absX = item.relativeX * canvas.width;
+        const absY = item.relativeY * canvas.height;
+        return (
+          Math.abs(absX - canvasX) < 10 &&
+          Math.abs(absY - canvasY) < 10 &&
+          item.page === pageNum
+        );
+      });
+
+      if (index !== -1) {
+        const item = textItems[index];
+        if (textRef.current) {
+          textRef.current.value = item.text;
+          textRef.current.focus();
+        }
+        setEditingIndex(index);
+      } else {
+        console.log("Текст не найден для редактирования.");
+      }
+    },
+    [pageNum, textItems]
+  );
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      canvas.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [handleContextMenu]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !pdfDoc) return;
@@ -304,7 +354,6 @@ const PdfEditor = () => {
       draggingItem.relativeY = (canvasY - dragOffsetY) / canvas.height;
     };
 
-
     const mouseUp = (e: MouseEvent) => {
       if (!draggingItem) return;
 
@@ -367,117 +416,115 @@ const PdfEditor = () => {
       }
     };
 
+    const touchMove = (e: TouchEvent) => {
+      if (!draggingItem) return;
+      e.preventDefault();
 
-   const touchMove = (e: TouchEvent) => {
-     if (!draggingItem) return;
-     e.preventDefault();
+      const touch = e.touches[0];
+      const x = touch.clientX;
+      const y = touch.clientY;
 
-     const touch = e.touches[0];
-     const x = touch.clientX;
-     const y = touch.clientY;
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = ((x - rect.left) * canvas.width) / rect.width;
+      const canvasY = ((y - rect.top) * canvas.height) / rect.height;
 
-     const rect = canvas.getBoundingClientRect();
-     const canvasX = ((x - rect.left) * canvas.width) / rect.width;
-     const canvasY = ((y - rect.top) * canvas.height) / rect.height;
+      draggingItem.relativeX = (canvasX - dragOffsetX) / canvas.width;
+      draggingItem.relativeY = (canvasY - dragOffsetY) / canvas.height;
 
-     draggingItem.relativeX = (canvasX - dragOffsetX) / canvas.width;
-     draggingItem.relativeY = (canvasY - dragOffsetY) / canvas.height;
+      const itemX = draggingItem.relativeX * canvas.width;
+      const itemY = draggingItem.relativeY * canvas.height;
 
-     const itemX = draggingItem.relativeX * canvas.width;
-     const itemY = draggingItem.relativeY * canvas.height;
+      const fontSize = draggingItem.fontSize ?? 16;
+      const ctx = canvas.getContext("2d");
+      ctx!.font = `${fontSize}px sans-serif`;
+      const metrics = ctx!.measureText(draggingItem.text);
+      const textWidth = metrics.width;
+      const textHeight = fontSize * 1.2;
 
-     const fontSize = draggingItem.fontSize ?? 16;
-     const ctx = canvas.getContext("2d");
-     ctx!.font = `${fontSize}px sans-serif`;
-     const metrics = ctx!.measureText(draggingItem.text);
-     const textWidth = metrics.width;
-     const textHeight = fontSize * 1.2;
+      const leftEdge = itemX;
+      const rightEdge = itemX + textWidth;
+      const topEdge = itemY;
+      const bottomEdge = itemY + textHeight;
 
-     const leftEdge = itemX;
-     const rightEdge = itemX + textWidth;
-     const topEdge = itemY;
-     const bottomEdge = itemY + textHeight;
+      const visibleLeft = Math.max(0, leftEdge);
+      const visibleRight = Math.min(canvas.width, rightEdge);
+      const visibleWidth = visibleRight - visibleLeft;
+      const percentVisible = visibleWidth / textWidth;
 
-     const visibleLeft = Math.max(0, leftEdge);
-     const visibleRight = Math.min(canvas.width, rightEdge);
-     const visibleWidth = visibleRight - visibleLeft;
-     const percentVisible = visibleWidth / textWidth;
+      const is90PercentOutside = percentVisible < 0.1;
 
-     const is90PercentOutside = percentVisible < 0.1;
+      if (is90PercentOutside) {
+        const updated = textItems.filter((item) => item !== draggingItem);
+        localStorage.setItem(textKey, JSON.stringify(updated));
+        setTextItems(updated);
 
-     if (is90PercentOutside) {
-       const updated = textItems.filter((item) => item !== draggingItem);
-       localStorage.setItem(textKey, JSON.stringify(updated));
-       setTextItems(updated);
+        const deletedText = draggingItem.text;
+        draggingItem = null;
 
-       const deletedText = draggingItem.text;
-       draggingItem = null;
-
-       setTimeout(() => {
-         const stored = localStorage.getItem(textKey);
-         if (stored) {
-           try {
-             const parsed = JSON.parse(stored);
-             setTextItems(parsed);
-           } catch (err) {
-             console.error("Ошибка парсинга localStorage:", err);
-           }
-         }
-         renderPageWithParams(pageNum);
-       }, 0);
-
-       console.log(`Удалён элемент при выходе >90%: "${deletedText}"`);
-       return;
-     }
-   };
-
-
-const touchEnd = (e: TouchEvent) => {
-  if (!draggingItem) return;
-
-  const touch = e.changedTouches[0];
-  const x = touch.clientX;
-  const y = touch.clientY;
-
-  const rect = canvas.getBoundingClientRect();
-  const isOutside =
-    x < rect.left || x > rect.right || y < rect.top || y > rect.bottom;
-
-  let updatedItems = [...textItems];
-
-  if (isOutside) {
-    updatedItems = updatedItems.filter((item) => item !== draggingItem);
-    console.log(`Удалён элемент: "${draggingItem.text}"`);
-  } else {
-    updatedItems = updatedItems.map((item) =>
-      item === draggingItem
-        ? {
-            ...item,
-            relativeX: (x - dragOffsetX - rect.left) / rect.width,
-            relativeY: (y - dragOffsetY - rect.top) / rect.height,
+        setTimeout(() => {
+          const stored = localStorage.getItem(textKey);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              setTextItems(parsed);
+            } catch (err) {
+              console.error("Ошибка парсинга localStorage:", err);
+            }
           }
-        : item
-    );
-  }
+          renderPageWithParams(pageNum);
+        }, 0);
 
-  localStorage.setItem(textKey, JSON.stringify(updatedItems));
-  setTextItems(updatedItems);
-  draggingItem = null;
-
-  // Синхронизация и рендер
-  setTimeout(() => {
-    const stored = localStorage.getItem(textKey);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setTextItems(parsed);
-      } catch (err) {
-        console.error("Ошибка парсинга localStorage:", err);
+        console.log(`Удалён элемент при выходе >90%: "${deletedText}"`);
+        return;
       }
-    }
-    renderPageWithParams(pageNum);
-  }, 0);
-};
+    };
+
+    const touchEnd = (e: TouchEvent) => {
+      if (!draggingItem) return;
+
+      const touch = e.changedTouches[0];
+      const x = touch.clientX;
+      const y = touch.clientY;
+
+      const rect = canvas.getBoundingClientRect();
+      const isOutside =
+        x < rect.left || x > rect.right || y < rect.top || y > rect.bottom;
+
+      let updatedItems = [...textItems];
+
+      if (isOutside) {
+        updatedItems = updatedItems.filter((item) => item !== draggingItem);
+        console.log(`Удалён элемент: "${draggingItem.text}"`);
+      } else {
+        updatedItems = updatedItems.map((item) =>
+          item === draggingItem
+            ? {
+                ...item,
+                relativeX: (x - dragOffsetX - rect.left) / rect.width,
+                relativeY: (y - dragOffsetY - rect.top) / rect.height,
+              }
+            : item
+        );
+      }
+
+      localStorage.setItem(textKey, JSON.stringify(updatedItems));
+      setTextItems(updatedItems);
+      draggingItem = null;
+
+      // Синхронизация и рендер
+      setTimeout(() => {
+        const stored = localStorage.getItem(textKey);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            setTextItems(parsed);
+          } catch (err) {
+            console.error("Ошибка парсинга localStorage:", err);
+          }
+        }
+        renderPageWithParams(pageNum);
+      }, 0);
+    };
 
     canvas.addEventListener("mousedown", mouseDown);
     canvas.addEventListener("mousemove", mouseMove);
@@ -498,10 +545,8 @@ const touchEnd = (e: TouchEvent) => {
       window.removeEventListener("mouseup", mouseUp);
       window.removeEventListener("touchend", touchEnd);
       window.removeEventListener("touchcancel", touchEnd);
-
     };
   }, [canvasRef, textItems, pageNum, renderPageWithParams, textKey]);
-  
 
   return isLoading ? (
     <Loading />
