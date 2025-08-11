@@ -85,12 +85,11 @@
 
 // export default useSignUpWithEmailAndPassword;
 
-
-
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
+import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth, firestore } from "../firebase/firebase";
 import {
   collection,
@@ -106,6 +105,8 @@ import { User, SignUpInputs } from "../types/user.dto";
 import Cookies from "js-cookie";
 
 const useSignUpWithEmailAndPassword = () => {
+  const [createUserWithEmailAndPassword, , loading, error] =
+    useCreateUserWithEmailAndPassword(auth);
   const showToast = useShowToast();
   const loginUser = useAuthStore((state) => state.login);
 
@@ -130,17 +131,18 @@ const useSignUpWithEmailAndPassword = () => {
     }
 
     try {
-      // Создаём пользователя
       const newUserCred = await createUserWithEmailAndPassword(
-        auth,
         inputs.email,
         inputs.password
       );
 
+      if (!newUserCred) {
+        showToast("Ошибка", "Не удалось создать пользователя", "error");
+        return false;
+      }
+
       // Гарантируем авторизацию
       await signInWithEmailAndPassword(auth, inputs.email, inputs.password);
-
-      // Обновляем токен
       await auth.currentUser?.getIdToken(true);
 
       const userDoc: User = {
@@ -173,7 +175,7 @@ const useSignUpWithEmailAndPassword = () => {
     }
   };
 
-  return { signup };
+  return { signup, loading, error };
 };
 
 export default useSignUpWithEmailAndPassword;
