@@ -100,13 +100,19 @@ import { User, SignUpInputs } from "../types/user.dto";
 import Cookies from "js-cookie";
 import { useState } from "react";
 
-const useSignUpWithEmailAndPassword = () => {
+type UseSignUpHook = {
+  signup: (inputs: SignUpInputs) => Promise<boolean>;
+  loading: boolean;
+  error: Error | null;
+};
+
+const useSignUpWithEmailAndPassword = (): UseSignUpHook => {
   const showToast = useShowToast();
   const loginUser = useAuthStore((state) => state.login);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const signup = async (inputs: SignUpInputs) => {
+  const signup = async (inputs: SignUpInputs): Promise<boolean> => {
     console.log("[SIGNUP] Старт регистрации", inputs);
     setLoading(true);
     setError(null);
@@ -140,7 +146,9 @@ const useSignUpWithEmailAndPassword = () => {
     } catch (err) {
       console.error("[SIGNUP] Ошибка при проверке Firestore:", err);
       showToast("Ошибка", "Не удалось проверить пользователя", "error");
-      setError("Ошибка при проверке Firestore");
+      setError(
+        err instanceof Error ? err : new Error("Unknown Firestore error")
+      );
       setLoading(false);
       return false;
     }
@@ -154,11 +162,11 @@ const useSignUpWithEmailAndPassword = () => {
       );
       console.log("[SIGNUP] Пользователь создан:", newUserCred.user.uid);
     } catch (err) {
+      console.error("[SIGNUP] Ошибка при создании пользователя:", err);
       const message =
         err instanceof Error ? err.message : "Не удалось создать аккаунт";
-      console.error("[SIGNUP] Ошибка при создании пользователя:", err);
       showToast("Ошибка", message, "error");
-      setError(message);
+      setError(err instanceof Error ? err : new Error("Unknown Auth error"));
       setLoading(false);
       return false;
     }
@@ -168,7 +176,7 @@ const useSignUpWithEmailAndPassword = () => {
         "[SIGNUP] Нет авторизованного пользователя после регистрации"
       );
       showToast("Ошибка", "Авторизация не завершена", "error");
-      setError("Нет авторизованного пользователя");
+      setError(new Error("Нет авторизованного пользователя"));
       setLoading(false);
       return false;
     }
@@ -179,7 +187,9 @@ const useSignUpWithEmailAndPassword = () => {
     } catch (err) {
       console.error("[SIGNUP] Не удалось получить токен:", err);
       showToast("Ошибка", "Не удалось получить токен авторизации", "error");
-      setError("Ошибка получения токена");
+      setError(
+        err instanceof Error ? err : new Error("Ошибка получения токена")
+      );
       setLoading(false);
       return false;
     }
@@ -205,24 +215,24 @@ const useSignUpWithEmailAndPassword = () => {
         err
       );
       showToast("Ошибка", "Не удалось сохранить данные профиля", "error");
-      setError("Ошибка записи в Firestore");
+      setError(
+        err instanceof Error ? err : new Error("Ошибка записи в Firestore")
+      );
       setLoading(false);
       return false;
     }
 
     try {
       localStorage.setItem("user-info", JSON.stringify(userDoc));
-    } catch (err) {
-      console.warn("[SIGNUP] Не удалось записать в localStorage:", err);
-    }
-
-    try {
       Cookies.set("user-info", JSON.stringify(userDoc), {
         expires: 30,
         path: "/",
       });
     } catch (err) {
-      console.warn("[SIGNUP] Не удалось записать в cookies:", err);
+      console.warn(
+        "[SIGNUP] Не удалось записать в localStorage или cookies:",
+        err
+      );
     }
 
     loginUser(userDoc);
