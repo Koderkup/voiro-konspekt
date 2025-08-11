@@ -94,6 +94,7 @@ export const wrapText = (
 
   ctx.fillText(line, x, y);
 };
+
 export const renderPage = async (
   pageNum: number,
   pdfDoc: any,
@@ -110,7 +111,9 @@ export const renderPage = async (
   isRenderingRef.current = true;
 
   const page = await pdfDoc.getPage(pageNum);
-  const viewport = page.getViewport({ scale });
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  const viewport = page.getViewport({ scale: scale });
+
   const canvas = canvasRef.current;
   const ctx = canvas?.getContext("2d");
   if (!canvas || !ctx) {
@@ -118,18 +121,27 @@ export const renderPage = async (
     return;
   }
 
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
+  // Устанавливаем физический размер с учётом DPR
+  canvas.width = viewport.width * devicePixelRatio;
+  canvas.height = viewport.height * devicePixelRatio;
+
+  // CSS размер — как обычно
+  canvas.style.width = `${viewport.width}px`;
+  canvas.style.height = `${viewport.height}px`;
+
+  // Масштабируем контекст
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   await page.render({ canvasContext: ctx, viewport }).promise;
-  const lineHeight = fontValue + 4;
 
+  // Рисуем текст
   textItems
     .filter((t) => t.page === pageNum)
     .forEach((item) => {
-      const absX = item.relativeX * canvas.width;
-      const absY = item.relativeY * canvas.height;
-
+      const absX = item.relativeX * viewport.width;
+      const absY = item.relativeY * viewport.height;
       const font = item.fontSize ?? fontValue;
       const line = item.lineWidth ?? lineValue;
       const lineHeight = font + 4;
@@ -144,6 +156,7 @@ export const renderPage = async (
   setPageNum(pageNum);
   isRenderingRef.current = false;
 };
+
 
 export const loadPDF = async (
   fileInput: HTMLInputElement,
@@ -308,13 +321,22 @@ export async function clearPDFCache(key: string, textKey: string) {
   }
 }
 
+// export function downloadImage(canvas: HTMLCanvasElement, currentPage: number) {
+//   if (!canvas) return;
+//   const link = document.createElement("a");
+//   link.download = `page-${currentPage}.png`;
+//   link.href = canvas.toDataURL("image/png");
+//   link.click();
+// }
+
 export function downloadImage(canvas: HTMLCanvasElement, currentPage: number) {
   if (!canvas) return;
   const link = document.createElement("a");
   link.download = `page-${currentPage}.png`;
-  link.href = canvas.toDataURL("image/png");
+  link.href = canvas.toDataURL("image/png", 1.0); // 1.0 = максимальное качество
   link.click();
 }
+
 export function convertGitHubBlobToRaw(blobUrl: string) {
   const match = blobUrl.match(
     /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)$/
