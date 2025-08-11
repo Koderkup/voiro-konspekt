@@ -1,5 +1,6 @@
 import styles from "./style.module.css";
 import { Text } from "@chakra-ui/react";
+import { useColorMode } from "../ui/color-mode";
 
 interface RangeInputProps {
   fontValue: number;
@@ -39,11 +40,16 @@ const RangeInput = ({
   const left = Math.min(fontPercent, widthPercent);
   const right = Math.max(fontPercent, widthPercent);
   const trackWidth = right - left;
-
+  const { colorMode } = useColorMode();
   const isConflict = fontValue * 10 > lineValue;
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      style={{
+        filter: colorMode === "dark" ? "invert(1) hue-rotate(180deg)" : "none",
+      }}
+    >
       <div className={styles.rangeGroupe}>
         <div className={styles.rangeInputGroupe}>
           <div className={styles.InputsDefaultMinGroup}>

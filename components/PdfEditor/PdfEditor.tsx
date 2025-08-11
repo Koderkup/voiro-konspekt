@@ -28,8 +28,9 @@ import { useUserStorageKey } from "../../hooks/useUserStorageKey";
 import useAuthStore from "../../store/authStore";
 import Loading from "../Loading/Loading";
 import { TextItem } from "../../types/types";
-import { useCanvasDrag } from "../../hooks/useCanvasDrag";
 import RangeInput from "../rangeInput/RangeInput";
+import { MdArrowBack, MdArrowForward } from "react-icons/md";
+
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
@@ -693,7 +694,7 @@ const PdfEditor = () => {
             );
           }}
         >
-          ⬅
+          <MdArrowBack />
         </Button>
         <Button
           colorPalette="teal"
@@ -707,7 +708,7 @@ const PdfEditor = () => {
             );
           }}
         >
-          ➡
+          <MdArrowForward />
         </Button>
         <Button
           colorPalette="blue"
