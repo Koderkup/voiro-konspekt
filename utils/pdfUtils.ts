@@ -295,12 +295,12 @@ export const savePdf = async (
   return { success: true, message: "Файл сохранен" };
 };
 
-export async function clearPDFCache(key: string) {
+export async function clearPDFCache(key: string, textKey: string) {
   try {
     const db = await openPDFDatabase();
     const tx = db.transaction("files", "readwrite");
     await tx.objectStore("files").delete(key);
-    localStorage.removeItem(key);
+    localStorage.removeItem(textKey);
     location.reload();
   } catch (error) {
     console.error("Ошибка при очистке кэша: ", error);

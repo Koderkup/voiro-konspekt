@@ -161,7 +161,7 @@ const PdfEditor = () => {
 
   const clearCacheHandler = async () => {
     try {
-      await clearPDFCache(key);
+      await clearPDFCache(key, textKey);
       showToast("Success", "Кэш очищен", "success");
     } catch (error) {
       showToast("Error", "Ошибка при очистке кэша", "error");
