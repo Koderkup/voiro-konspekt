@@ -98,15 +98,19 @@ import useShowToast from "./useShowToast";
 import useAuthStore from "../store/authStore";
 import { User, SignUpInputs } from "../types/user.dto";
 import Cookies from "js-cookie";
+import { useState } from "react";
 
 const useSignUpWithEmailAndPassword = () => {
   const showToast = useShowToast();
   const loginUser = useAuthStore((state) => state.login);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const signup = async (inputs: SignUpInputs) => {
     console.log("[SIGNUP] Старт регистрации", inputs);
+    setLoading(true);
+    setError(null);
 
-    // 1. Проверка полей
     if (
       !inputs.email ||
       !inputs.password ||
@@ -115,10 +119,10 @@ const useSignUpWithEmailAndPassword = () => {
     ) {
       showToast("Ошибка", "Пожалуйста, заполните все поля!", "error");
       console.warn("[SIGNUP] Не все поля заполнены");
+      setLoading(false);
       return false;
     }
 
-    // 2. Проверка дубликата email в Firestore
     try {
       const usersRef = collection(firestore, "users");
       const q = query(usersRef, where("email", "==", inputs.email));
@@ -130,15 +134,17 @@ const useSignUpWithEmailAndPassword = () => {
           "error"
         );
         console.warn("[SIGNUP] Email уже зарегистрирован:", inputs.email);
+        setLoading(false);
         return false;
       }
     } catch (err) {
       console.error("[SIGNUP] Ошибка при проверке Firestore:", err);
       showToast("Ошибка", "Не удалось проверить пользователя", "error");
+      setError("Ошибка при проверке Firestore");
+      setLoading(false);
       return false;
     }
 
-    // 3. Создание пользователя в Firebase Auth
     let newUserCred;
     try {
       newUserCred = await createUserWithEmailAndPassword(
@@ -148,35 +154,36 @@ const useSignUpWithEmailAndPassword = () => {
       );
       console.log("[SIGNUP] Пользователь создан:", newUserCred.user.uid);
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Не удалось создать аккаунт";
       console.error("[SIGNUP] Ошибка при создании пользователя:", err);
-      showToast(
-        "Ошибка",
-        err instanceof Error ? err.message : "Не удалось создать аккаунт",
-        "error"
-      );
+      showToast("Ошибка", message, "error");
+      setError(message);
+      setLoading(false);
       return false;
     }
 
-    // 4. Проверяем авторизацию
     if (!auth.currentUser) {
       console.error(
         "[SIGNUP] Нет авторизованного пользователя после регистрации"
       );
       showToast("Ошибка", "Авторизация не завершена", "error");
+      setError("Нет авторизованного пользователя");
+      setLoading(false);
       return false;
     }
 
-    // 5. Получение токена
     try {
       const token = await auth.currentUser.getIdToken(true);
       console.log("[SIGNUP] ID токен получен:", !!token);
     } catch (err) {
       console.error("[SIGNUP] Не удалось получить токен:", err);
       showToast("Ошибка", "Не удалось получить токен авторизации", "error");
+      setError("Ошибка получения токена");
+      setLoading(false);
       return false;
     }
 
-    // 6. Создание документа пользователя в Firestore
     const userDoc: User = {
       uid: newUserCred.user.uid,
       email: inputs.email,
@@ -198,10 +205,11 @@ const useSignUpWithEmailAndPassword = () => {
         err
       );
       showToast("Ошибка", "Не удалось сохранить данные профиля", "error");
+      setError("Ошибка записи в Firestore");
+      setLoading(false);
       return false;
     }
 
-    // 7. Сохраняем локально
     try {
       localStorage.setItem("user-info", JSON.stringify(userDoc));
     } catch (err) {
@@ -217,14 +225,13 @@ const useSignUpWithEmailAndPassword = () => {
       console.warn("[SIGNUP] Не удалось записать в cookies:", err);
     }
 
-    // 8. Обновляем состояние в сторе
     loginUser(userDoc);
-
     console.log("[SIGNUP] Регистрация завершена ✅");
+    setLoading(false);
     return true;
   };
 
-  return { signup };
+  return { signup, loading, error };
 };
 
 export default useSignUpWithEmailAndPassword;
