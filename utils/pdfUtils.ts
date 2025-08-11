@@ -145,7 +145,6 @@ export const renderPage = async (
   isRenderingRef.current = false;
 };
 
-
 export const loadPDF = async (
   fileInput: HTMLInputElement,
   key: string,
@@ -209,15 +208,27 @@ export const handleCanvasClick = (
   renderPageFn(newItems);
 };
 
+const adjustYForPDF = (y: number, fontSize: number) => {
+  // Смещение вниз на ~baseline + небольшая компенсация
+  return y - fontSize * 0.8 + 3;
+};
+
 export const savePdf = async (
   canvasRef: React.RefObject<HTMLCanvasElement>,
   key: string,
   loadPDFFromDB: (key: string) => Promise<Uint8Array | null>,
-  textItems: any[]
+  textItems: {
+    page: number;
+    relativeX: number;
+    relativeY: number;
+    text: string;
+    fontSize?: number;
+  }[]
 ) => {
   const pdfBytes = await loadPDFFromDB(key);
   if (!pdfBytes || textItems.length === 0)
     return { success: false, message: "Нет данных для сохранения" };
+
   const doc = await PDFDocument.load(pdfBytes);
   doc.registerFontkit(fontkit);
 
@@ -230,22 +241,26 @@ export const savePdf = async (
   for (const item of textItems) {
     const page = pages[item.page - 1];
     const { width, height } = page.getSize();
+
+    const fontSize = item.fontSize ?? 11;
+    const maxWidth = fontSize * 25; // адаптивная ширина
+    const lineHeight = fontSize * 1.4;
+
     let pdfX = item.relativeX * width;
     let pdfY = height - item.relativeY * height;
+    pdfY = adjustYForPDF(pdfY, fontSize);
 
-    const maxWidth = 300;
-    const lineHeight = 16;
     const words = item.text.split(" ");
     let line = "";
 
     for (let i = 0; i < words.length; i++) {
       const testLine = line + words[i] + " ";
-      const testWidth = font.widthOfTextAtSize(testLine, 16);
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
       if (testWidth > maxWidth && i > 0) {
         page.drawText(line.trim(), {
           x: pdfX,
           y: pdfY,
-          size: 11,
+          size: fontSize,
           font,
           color: rgb(0, 0, 0),
         });
@@ -260,12 +275,13 @@ export const savePdf = async (
       page.drawText(line.trim(), {
         x: pdfX,
         y: pdfY,
-        size: 11,
+        size: fontSize,
         font,
         color: rgb(0, 0, 0),
       });
     }
   }
+
   const modifiedPdfBytes = await doc.save();
   const blob = new Blob([new Uint8Array(modifiedPdfBytes)], {
     type: "application/pdf",
@@ -275,6 +291,7 @@ export const savePdf = async (
   link.download = "konspekt.pdf";
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+
   return { success: true, message: "Файл сохранен" };
 };
 

@@ -806,3 +806,78 @@ useEffect drag-n-drop
   //     canvas.removeEventListener("contextmenu", handleContextMenu);
   //   };
   // }, [handleContextMenu]);
+
+
+
+
+
+
+
+  export const savePdf = async (
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  key: string,
+  loadPDFFromDB: (key: string) => Promise<Uint8Array | null>,
+  textItems: any[]
+) => {
+  const pdfBytes = await loadPDFFromDB(key);
+  if (!pdfBytes || textItems.length === 0)
+    return { success: false, message: "Нет данных для сохранения" };
+  const doc = await PDFDocument.load(pdfBytes);
+  doc.registerFontkit(fontkit);
+
+  const fontBytes = await fetch(
+    "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37/ttf/DejaVuSans.ttf"
+  ).then((r) => r.arrayBuffer());
+  const font = await doc.embedFont(fontBytes);
+  const pages = doc.getPages();
+
+  for (const item of textItems) {
+    const page = pages[item.page - 1];
+    const { width, height } = page.getSize();
+    let pdfX = item.relativeX * width;
+    let pdfY = height - item.relativeY * height;
+
+    const maxWidth = 300;
+    const lineHeight = 16;
+    const words = item.text.split(" ");
+    let line = "";
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + " ";
+      const testWidth = font.widthOfTextAtSize(testLine, 16);
+      if (testWidth > maxWidth && i > 0) {
+        page.drawText(line.trim(), {
+          x: pdfX,
+          y: pdfY,
+          size: 11,
+          font,
+          color: rgb(0, 0, 0),
+        });
+        line = words[i] + " ";
+        pdfY -= lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+
+    if (line.trim()) {
+      page.drawText(line.trim(), {
+        x: pdfX,
+        y: pdfY,
+        size: 11,
+        font,
+        color: rgb(0, 0, 0),
+      });
+    }
+  }
+  const modifiedPdfBytes = await doc.save();
+  const blob = new Blob([new Uint8Array(modifiedPdfBytes)], {
+    type: "application/pdf",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "konspekt.pdf";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+  return { success: true, message: "Файл сохранен" };
+};
