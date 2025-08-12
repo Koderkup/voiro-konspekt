@@ -139,8 +139,8 @@ export const renderPage = async (
       ctx.fillStyle = "black";
       ctx.textBaseline = "top";
 
-      // ctx.imageSmoothingEnabled = true;
-      // ctx.imageSmoothingQuality = "high";
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
       wrapTextFn(ctx, item.text, absX, absY, line, lineHeight);
     });
