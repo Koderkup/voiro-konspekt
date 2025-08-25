@@ -14,7 +14,6 @@ const StudyPage = () => {
     setIsMounted(true);
     if (user) setWorkbooks(user.accessibleNotes);
   }, []);
-console.log(workbooks);
   if (!isMounted) return <Loading />;
   return (
     <Flex

@@ -30,7 +30,7 @@ import Loading from "../Loading/Loading";
 import { TextItem } from "../../types/types";
 import RangeInput from "../rangeInput/RangeInput";
 import { MdArrowBack, MdArrowForward } from "react-icons/md";
-
+import { useRouter } from "next/navigation";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
@@ -54,7 +54,7 @@ const PdfEditor = () => {
   const [scale, setScale] = useState(1.2);
   const [showIcon, setShowIcon] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
+  const router = useRouter();
   const {
     savePDFToDB,
     loadPDFFromDB,
@@ -156,7 +156,6 @@ const PdfEditor = () => {
     } else {
       showToast("Error", result.message, "error");
     }
-    console.log(result);
   };
 
   const clearCacheHandler = async () => {
@@ -192,7 +191,10 @@ const PdfEditor = () => {
       } else {
         // Если PDF не найден — загружаем по ссылке из accessibleNotes
         const noteUrl = user?.accessibleNotes?.[0]?.url;
-        if (!noteUrl) return;
+        if (!noteUrl) {
+          router.push("/study-page");
+          return; // ⛔️
+        }
 
         const rawUrl = convertGitHubBlobToRaw(noteUrl);
         try {
