@@ -1,6 +1,7 @@
 import * as pdfjsLib from "pdfjs-dist";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { TextItem } from "../types/types";
 
 const openPDFDatabase = async () => {
   if (typeof window !== "undefined") {
@@ -99,13 +100,8 @@ export const savePdf = async (
   canvasRef: React.RefObject<HTMLCanvasElement>,
   key: string,
   loadPDFFromDB: (key: string) => Promise<Uint8Array | null>,
-  textItems: {
-    page: number;
-    relativeX: number;
-    relativeY: number;
-    text: string;
-    fontSize?: number;
-  }[]
+  textItems: TextItem[],
+  lineValue: number
 ) => {
   const pdfBytes = await loadPDFFromDB(key);
   if (!pdfBytes || textItems.length === 0)
@@ -114,9 +110,7 @@ export const savePdf = async (
   const doc = await PDFDocument.load(pdfBytes);
   doc.registerFontkit(fontkit);
 
-  const fontBytes = await fetch(
-    "/DejaVuSans.ttf"
-  ).then((r) => r.arrayBuffer());
+  const fontBytes = await fetch("/DejaVuSans.ttf").then((r) => r.arrayBuffer());
   const font = await doc.embedFont(fontBytes);
   const pages = doc.getPages();
 
@@ -124,9 +118,9 @@ export const savePdf = async (
     const page = pages[item.page - 1];
     const { width, height } = page.getSize();
 
-    const fontSize = item.fontSize ?? 11;
-    const maxWidth = fontSize * 25; // адаптивная ширина
-    const lineHeight = fontSize * 1.4;
+    const fontSize = (item.fontSize ?? 11) * 0.85;
+    const maxWidth = item.lineWidth ?? lineValue;
+    const lineHeight = fontSize * 1.3;
 
     let pdfX = item.relativeX * width;
     let pdfY = height - item.relativeY * height;
