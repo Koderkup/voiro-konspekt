@@ -115,7 +115,7 @@ export const savePdf = async (
   doc.registerFontkit(fontkit);
 
   const fontBytes = await fetch(
-    "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37/ttf/DejaVuSans.ttf"
+    "/DejaVuSans.ttf"
   ).then((r) => r.arrayBuffer());
   const font = await doc.embedFont(fontBytes);
   const pages = doc.getPages();
