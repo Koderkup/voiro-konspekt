@@ -29,8 +29,20 @@ body {
   }
 } */
 /* Global styles */
+
+
+@font-face {
+  font-family: 'DejaVu Sans';
+  src: url('/DejaVuSans.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 body {
   transition: background-image 0.3s ease;
+  font-family: 'DejaVu Sans', sans-serif;
 }
 
 html[style='color-scheme: light;'] body {
