@@ -120,9 +120,9 @@ export const savePdf = async (
     const page = pages[item.page - 1];
     const { width, height } = page.getSize();
 
-    const fontSize = (item.fontSize ?? 11) * 0.85;
-    const maxWidth = item.lineWidth ?? lineValue;
-    const lineHeight = fontSize * 1.3;
+    const fontSize = (item.fontSize ?? 11) * 0.83;
+    const maxWidth = Math.min(item.lineWidth ?? lineValue, width * 0.82);
+    const lineHeight = fontSize * 1.25;
 
     let pdfX = item.relativeX * width;
     let pdfY = height - item.relativeY * height;
