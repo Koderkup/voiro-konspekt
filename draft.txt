@@ -1599,3 +1599,74 @@ useEffect(() => {
 
 
  "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37/ttf/DejaVuSans.ttf"
+
+
+
+
+
+
+ const mouseUp = (e: MouseEvent) => {
+    if (!draggingItem) return;
+    const { x, y } = getCoords(e.clientX, e.clientY);
+
+    const updatedItems = textItems.map((item) =>
+      item === draggingItem
+        ? {
+            ...item,
+            relativeX: (x - dragOffsetX) / canvas.width,
+            relativeY: (y - dragOffsetY) / canvas.height,
+          }
+        : item
+    );
+
+    localStorage.setItem(textKey, JSON.stringify(updatedItems));
+    setTextItems(updatedItems);
+    draggingItem = null;
+
+    setTimeout(() => {
+      renderPageWithParams(pageNum);
+    }, 0);
+  };
+
+
+
+const touchEnd = (e: TouchEvent) => {
+    if (longPressTimeout) {
+      clearTimeout(longPressTimeout);
+      longPressTimeout = null;
+    }
+
+    document.body.style.overflow = ""; // 🔓 разблокировка scroll
+
+    if (moved && touchedItem) {
+      const touch = e.changedTouches[0];
+      const { x, y } = getCoords(touch.clientX, touch.clientY);
+
+      touchedItem.relativeX = x / canvas.width;
+      touchedItem.relativeY = y / canvas.height;
+
+      const updated = textItems.map((item) =>
+        item === touchedItem ? touchedItem : item
+      );
+      localStorage.setItem(textKey, JSON.stringify(updated));
+      setTextItems(updated);
+      console.log(`Перемещён элемент: "${touchedItem.text}"`);
+
+      setTimeout(() => {
+        renderPageWithParams(pageNum);
+      }, 0);
+    }
+
+    touchedItem = null;
+  };
+
+  const touchCancel = () => {
+    document.body.style.overflow = ""; // 🔓 разблокировка scroll
+    if (longPressTimeout) {
+      clearTimeout(longPressTimeout);
+      longPressTimeout = null;
+    }
+    touchedItem = null;
+  };
+
+
