@@ -150,7 +150,7 @@ const PdfEditor = () => {
     );
   };
   const savePdfHandler = async () => {
-    const result = await savePdf(canvasRef, key, loadPDFFromDB, textItems);
+    const result = await savePdf(canvasRef, key, loadPDFFromDB, textItems, lineValue);
     if (result.success) {
       showToast("Success", result.message, "success");
     } else {
@@ -351,28 +351,45 @@ useEffect(() => {
     draggingItem.relativeY = (y - dragOffsetY) / canvas.height;
   };
 
-  const mouseUp = (e: MouseEvent) => {
-    if (!draggingItem) return;
-    const { x, y } = getCoords(e.clientX, e.clientY);
+  
+const mouseUp = (e: MouseEvent) => {
+  if (!draggingItem || !canvas) return;
 
-    const updatedItems = textItems.map((item) =>
+  const { x, y } = getCoords(e.clientX, e.clientY);
+  const newX = (x - dragOffsetX) / canvas.width;
+  const newY = (y - dragOffsetY) / canvas.height;
+
+  // Проверка: вышел ли элемент за границы canvas
+  const isOutOfBounds = newX < 0 || newX > 1 || newY < 0 || newY > 1;
+
+  let updatedItems: TextItem[];
+
+  if (isOutOfBounds) {
+    // Удаляем элемент
+    updatedItems = textItems.filter((item) => item !== draggingItem);
+    console.log(`Удалён элемент: "${draggingItem.text}"`);
+  } else {
+    // Обновляем позицию
+    updatedItems = textItems.map((item) =>
       item === draggingItem
         ? {
             ...item,
-            relativeX: (x - dragOffsetX) / canvas.width,
-            relativeY: (y - dragOffsetY) / canvas.height,
+            relativeX: newX,
+            relativeY: newY,
           }
         : item
     );
+  }
 
-    localStorage.setItem(textKey, JSON.stringify(updatedItems));
-    setTextItems(updatedItems);
-    draggingItem = null;
+  localStorage.setItem(textKey, JSON.stringify(updatedItems));
+  setTextItems(updatedItems);
+  draggingItem = null;
 
-    setTimeout(() => {
-      renderPageWithParams(pageNum);
-    }, 0);
-  };
+  setTimeout(() => {
+    renderPageWithParams(pageNum);
+  }, 0);
+};
+
 
   const touchStart = (e: TouchEvent) => {
     const touch = e.touches[0];
@@ -433,19 +450,32 @@ useEffect(() => {
 
     document.body.style.overflow = ""; // 🔓 разблокировка scroll
 
-    if (moved && touchedItem) {
+    if (moved && touchedItem && canvas) {
       const touch = e.changedTouches[0];
       const { x, y } = getCoords(touch.clientX, touch.clientY);
 
-      touchedItem.relativeX = x / canvas.width;
-      touchedItem.relativeY = y / canvas.height;
+      const newX = x / canvas.width;
+      const newY = y / canvas.height;
 
-      const updated = textItems.map((item) =>
-        item === touchedItem ? touchedItem : item
-      );
+      const isOutOfBounds = newX < 0 || newX > 1 || newY < 0 || newY > 1;
+
+      let updated: TextItem[];
+
+      if (isOutOfBounds) {
+        updated = textItems.filter((item) => item !== touchedItem);
+        console.log(`Удалён элемент: "${touchedItem.text}"`);
+      } else {
+        touchedItem.relativeX = newX;
+        touchedItem.relativeY = newY;
+
+        updated = textItems.map((item) =>
+          item === touchedItem ? touchedItem : item
+        );
+        console.log(`Перемещён элемент: "${touchedItem.text}"`);
+      }
+
       localStorage.setItem(textKey, JSON.stringify(updated));
       setTextItems(updated);
-      console.log(`Перемещён элемент: "${touchedItem.text}"`);
 
       setTimeout(() => {
         renderPageWithParams(pageNum);
@@ -463,6 +493,7 @@ useEffect(() => {
     }
     touchedItem = null;
   };
+
 
   canvas.addEventListener("mousedown", mouseDown);
   canvas.addEventListener("mousemove", mouseMove);

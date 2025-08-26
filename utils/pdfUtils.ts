@@ -1,6 +1,8 @@
 import * as pdfjsLib from "pdfjs-dist";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { TextItem } from "../types/types";
+import "../app/globals.css";
 
 const openPDFDatabase = async () => {
   if (typeof window !== "undefined") {
@@ -69,12 +71,13 @@ export const wrapText = (
   x: number,
   y: number,
   maxWidth: number = 300,
-  lineHeight: number = 20
+  lineHeight: number = 20,
+  fontSize: number = 16
 ) => {
   if (typeof window === "undefined") {
     throw new Error("Window is not defined");
   }
-
+  ctx.font = `${fontSize}px 'DejaVu Sans'`;
   const words = text.split(" ");
   let line = "";
 
@@ -93,6 +96,81 @@ export const wrapText = (
   }
 
   ctx.fillText(line, x, y);
+};
+
+export const savePdf = async (
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  key: string,
+  loadPDFFromDB: (key: string) => Promise<Uint8Array | null>,
+  textItems: TextItem[],
+  lineValue: number
+) => {
+  const pdfBytes = await loadPDFFromDB(key);
+  if (!pdfBytes || textItems.length === 0)
+    return { success: false, message: "Нет данных для сохранения" };
+
+  const doc = await PDFDocument.load(pdfBytes);
+  doc.registerFontkit(fontkit);
+
+  const fontBytes = await fetch("/DejaVuSans.ttf").then((r) => r.arrayBuffer());
+  const font = await doc.embedFont(fontBytes);
+  const pages = doc.getPages();
+
+  for (const item of textItems) {
+    const page = pages[item.page - 1];
+    const { width, height } = page.getSize();
+
+    const fontSize = (item.fontSize ?? 11) * 0.83;
+    const maxWidth = Math.min(item.lineWidth ?? lineValue, width * 0.82);
+    const lineHeight = fontSize * 1.25;
+
+    let pdfX = item.relativeX * width;
+    let pdfY = height - item.relativeY * height;
+    pdfY = adjustYForPDF(pdfY, fontSize);
+
+    const words = item.text.split(" ");
+    let line = "";
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + " ";
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+      if (testWidth > maxWidth && i > 0) {
+        page.drawText(line.trim(), {
+          x: pdfX,
+          y: pdfY,
+          size: fontSize,
+          font,
+          color: rgb(0, 0, 0),
+        });
+        line = words[i] + " ";
+        pdfY -= lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+
+    if (line.trim()) {
+      page.drawText(line.trim(), {
+        x: pdfX,
+        y: pdfY,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+    }
+  }
+
+  const modifiedPdfBytes = await doc.save();
+  const blob = new Blob([new Uint8Array(modifiedPdfBytes)], {
+    type: "application/pdf",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "konspekt.pdf";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+
+  return { success: true, message: "Файл сохранен" };
 };
 
 export const renderPage = async (
@@ -135,20 +213,19 @@ export const renderPage = async (
       const line = item.lineWidth ?? lineValue;
       const lineHeight = font + 4;
 
-      ctx.font = `${font}px sans-serif`;
+      // ctx.font = `${font}px sans-serif`;
       ctx.fillStyle = "black";
       ctx.textBaseline = "top";
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
-      wrapTextFn(ctx, item.text, absX, absY, line, lineHeight);
+      wrapTextFn(ctx, item.text, absX, absY, line, lineHeight, font);
     });
 
   setPageNum(pageNum);
   isRenderingRef.current = false;
 };
-
 
 export const loadPDF = async (
   fileInput: HTMLInputElement,
@@ -218,88 +295,6 @@ const adjustYForPDF = (y: number, fontSize: number) => {
   return y - fontSize * 0.8 + 3;
 };
 
-export const savePdf = async (
-  canvasRef: React.RefObject<HTMLCanvasElement>,
-  key: string,
-  loadPDFFromDB: (key: string) => Promise<Uint8Array | null>,
-  textItems: {
-    page: number;
-    relativeX: number;
-    relativeY: number;
-    text: string;
-    fontSize?: number;
-  }[]
-) => {
-  const pdfBytes = await loadPDFFromDB(key);
-  if (!pdfBytes || textItems.length === 0)
-    return { success: false, message: "Нет данных для сохранения" };
-
-  const doc = await PDFDocument.load(pdfBytes);
-  doc.registerFontkit(fontkit);
-
-  const fontBytes = await fetch(
-    "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37/ttf/DejaVuSans.ttf"
-  ).then((r) => r.arrayBuffer());
-  const font = await doc.embedFont(fontBytes);
-  const pages = doc.getPages();
-
-  for (const item of textItems) {
-    const page = pages[item.page - 1];
-    const { width, height } = page.getSize();
-
-    const fontSize = item.fontSize ?? 11;
-    const maxWidth = fontSize * 25; // адаптивная ширина
-    const lineHeight = fontSize * 1.4;
-
-    let pdfX = item.relativeX * width;
-    let pdfY = height - item.relativeY * height;
-    pdfY = adjustYForPDF(pdfY, fontSize);
-
-    const words = item.text.split(" ");
-    let line = "";
-
-    for (let i = 0; i < words.length; i++) {
-      const testLine = line + words[i] + " ";
-      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
-      if (testWidth > maxWidth && i > 0) {
-        page.drawText(line.trim(), {
-          x: pdfX,
-          y: pdfY,
-          size: fontSize,
-          font,
-          color: rgb(0, 0, 0),
-        });
-        line = words[i] + " ";
-        pdfY -= lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-
-    if (line.trim()) {
-      page.drawText(line.trim(), {
-        x: pdfX,
-        y: pdfY,
-        size: fontSize,
-        font,
-        color: rgb(0, 0, 0),
-      });
-    }
-  }
-
-  const modifiedPdfBytes = await doc.save();
-  const blob = new Blob([new Uint8Array(modifiedPdfBytes)], {
-    type: "application/pdf",
-  });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "konspekt.pdf";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1500);
-
-  return { success: true, message: "Файл сохранен" };
-};
-
 export async function clearPDFCache(key: string, textKey: string) {
   try {
     const db = await openPDFDatabase();
@@ -312,7 +307,6 @@ export async function clearPDFCache(key: string, textKey: string) {
     throw error;
   }
 }
-
 
 export function downloadImage(canvas: HTMLCanvasElement, currentPage: number) {
   if (!canvas) return;
